@@ -1,6 +1,5 @@
--- Drop existing tables if they exist
+-- Drop the users table if it exists
 DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS games;
 
 -- Create the users table
 CREATE TABLE users (

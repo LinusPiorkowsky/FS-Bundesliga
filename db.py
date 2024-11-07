@@ -1,56 +1,33 @@
 import sqlite3
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import current_app, g
 
-# Connect to the SQLite database
-def get_db_connection():
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+def get_db():
+    if 'db' not in g:
+        g.db = sqlite3.connect(
+            current_app.config['DATABASE'],
+            detect_types=sqlite3.PARSE_DECLTYPES
+        )
+        g.db.row_factory = sqlite3.Row
+    return g.db
 
-# Initialize the database
+def close_db(e=None):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
+
 def init_db():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Drop users table if it exists and create a new users table
-    cursor.execute("DROP TABLE IF EXISTS users;")
-    
-    cursor.execute("""
-        CREATE TABLE users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
-        );
-    """)
+    db = get_db()
+    with current_app.open_resource('Sql/create_tables.sql') as f:
+        db.executescript(f.read().decode('utf8'))
 
-    conn.commit()
-    conn.close()
+def init_app(app):
+    app.teardown_appcontext(close_db)
+    app.cli.add_command(init_db_command)
 
-# Add a new user to the database
-def add_user(username, password):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    try:
-        # Hash the password before storing it
-        hashed_password = generate_password_hash(password)
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
-        conn.commit()
-    except sqlite3.IntegrityError:
-        conn.close()
-        return False  # Username already exists
-    conn.close()
-    return True
+import click
 
-# Verify user credentials
-def verify_user(username, password):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
-    conn.close()
-    
-    if user and check_password_hash(user["password"], password):
-        return True
-    return False
+@click.command('init-db')
+def init_db_command():
+    """Clear the existing data and create new tables."""
+    init_db()
+    click.echo('Initialized the database.')
