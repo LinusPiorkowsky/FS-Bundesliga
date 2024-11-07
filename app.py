@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
+from db import init_db, add_user, verify_user
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Required to use sessions and flash messages
 
-# In-memory storage for simplicity; in a real app, use a database
-users = {}
+# Initialize the database
+init_db()
 
 # Route for the login page
 @app.route('/')
@@ -18,10 +19,8 @@ def login_post():
     username = request.form.get('username')
     password = request.form.get('password')
     
-    user = users.get(username)
-    
-    # Check if user exists and password is correct
-    if user and check_password_hash(user['password'], password):
+    # Verify user credentials
+    if verify_user(username, password):
         session['user'] = username
         flash('Logged in successfully!', 'success')
         return redirect(url_for('welcome'))
@@ -46,13 +45,11 @@ def register_post():
         flash('Passwords do not match', 'error')
         return redirect(url_for('register'))
     
-    # Check if username is already taken
-    if username in users:
+    # Try to add the user to the database
+    if not add_user(username, password):
         flash('Username already exists', 'error')
         return redirect(url_for('register'))
     
-    # Register the user
-    users[username] = {'password': generate_password_hash(password)}
     flash('Registration successful! Please log in.', 'success')
     return redirect(url_for('login'))
 
@@ -72,4 +69,5 @@ def logout():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
