@@ -1,73 +1,94 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+import os
+from flask import Flask, render_template, redirect, url_for, request, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
-from db import init_db, add_user, verify_user
+import db
+from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Required to use sessions and flash messages
+app.config['DATABASE'] = os.path.join(app.instance_path, 'users.db')
+app.config['SECRET_KEY'] = 'supersecretkey'  # Use a secure, random key in production
 
-# Initialize the database
-init_db()
+# Initialize the database with the app
+db.init_app(app)
 
-# Route for the login page
+# Ensure the instance folder exists
+try:
+    os.makedirs(app.instance_path)
+except OSError:
+    pass
+
+# Login required decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Route: Home (after login)
 @app.route('/')
-def login():
-    return render_template('login.html')
+@login_required
+def index():
+    return render_template('index.html')
 
-# Route for handling login
-@app.route('/login', methods=['POST'])
-def login_post():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    
-    # Verify user credentials
-    if verify_user(username, password):
-        session['user'] = username
-        flash('Logged in successfully!', 'success')
-        return redirect(url_for('welcome'))
-    else:
-        flash('Invalid username or password', 'error')
-        return redirect(url_for('login'))
-
-# Route for the registration page
-@app.route('/register')
+# Route: Register
+@app.route('/register', methods=('GET', 'POST'))
 def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        db_conn = db.get_db()
+        error = None
+
+        if not username:
+            error = 'Username is required.'
+        elif not password:
+            error = 'Password is required.'
+        elif db_conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone() is not None:
+            error = f'User {username} is already registered.'
+
+        if error is None:
+            db_conn.execute(
+                'INSERT INTO users (username, password) VALUES (?, ?)',
+                (username, generate_password_hash(password))
+            )
+            db_conn.commit()
+            flash('Registration successful! Please log in.')
+            return redirect(url_for('login'))
+
+        flash(error)
     return render_template('register.html')
 
-# Route for handling registration
-@app.route('/register', methods=['POST'])
-def register_post():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    confirm_password = request.form.get('confirm_password')
-    
-    # Check if passwords match
-    if password != confirm_password:
-        flash('Passwords do not match', 'error')
-        return redirect(url_for('register'))
-    
-    # Try to add the user to the database
-    if not add_user(username, password):
-        flash('Username already exists', 'error')
-        return redirect(url_for('register'))
-    
-    flash('Registration successful! Please log in.', 'success')
-    return redirect(url_for('login'))
+# Route: Login
+@app.route('/login', methods=('GET', 'POST'))
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        db_conn = db.get_db()
+        error = None
+        user = db_conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
 
-# Route for a welcome page after login
-@app.route('/welcome')
-def welcome():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return f'Welcome, {session["user"]}!'
+        if user is None or not check_password_hash(user['password'], password):
+            error = 'Incorrect username or password.'
 
-# Route to handle logout
+        if error is None:
+            session.clear()
+            session['user_id'] = user['id']
+            flash('You are now logged in.')
+            return redirect(url_for('index'))
+
+        flash(error)
+    return render_template('login.html')
+
+# Route: Logout
 @app.route('/logout')
+@login_required
 def logout():
-    session.pop('user', None)
-    flash('You have been logged out.', 'info')
+    session.clear()
+    flash('You have been logged out.')
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
