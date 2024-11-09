@@ -15,8 +15,13 @@
         <div>
             <a href="{{ url_for('results') }}">Results</a>
             <a href="{{ url_for('prediction') }}">Prediction</a>
-            <a href="{{ url_for('logout') }}">Logout</a>
+            
+            <!-- Logout Button -->
+            <form action="{{ url_for('logout') }}" method="POST" style="display:inline;">
+                <button type="submit">Logout</button>
+            </form>
         </div>
     </div>
 </body>
 </html>
+
