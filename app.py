@@ -29,9 +29,17 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('login'))
+            return redirect(url_for('login'))  # Benutzer zu Login-Seite weiterleiten, wenn nicht eingeloggt
         return f(*args, **kwargs)
     return decorated_function
+
+# Logout automatisch beim Start der Anwendung ausführen
+@app.before_first_request
+def logout_automatically():
+    # Wenn der Benutzer bereits eingeloggt ist, logge ihn aus
+    if 'user_id' in session:
+        session.clear()  # Löscht die Sitzung
+        flash('You have been logged out automatically.')  # Optional: Erfolgsmeldung
 
 @app.before_first_request
 def initialize_db():
@@ -39,16 +47,22 @@ def initialize_db():
     with app.app_context():
         db.init_db()
 
+# Route für die Home-Seite, die nur zugänglich ist, wenn der Benutzer eingeloggt ist
 @app.route('/')
 @login_required
 def index():
-    return render_template('index.html')
+    user_id = session.get('user_id')
+    db_conn = db.get_db()
+    user = db_conn.execute('SELECT username FROM users WHERE id = ?', (user_id,)).fetchone()
+    return render_template('welcome.html', username=user['username'])
 
+# Registrierung-Route
 @app.route('/register', methods=('GET', 'POST'))
 def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         db_conn = db.get_db()
         error = None
 
@@ -56,6 +70,8 @@ def register():
             error = 'Username is required.'
         elif not password:
             error = 'Password is required.'
+        elif password != confirm_password:
+            error = 'Passwords do not match.'
         elif db_conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone() is not None:
             error = f'User {username} is already registered.'
 
@@ -66,11 +82,12 @@ def register():
             )
             db_conn.commit()
             flash('Registration successful! Please log in.')
-            return redirect(url_for('login'))
+            return redirect(url_for('login'))  # Nach der Registrierung zur Login-Seite weiterleiten
 
         flash(error)
     return render_template('register.html')
 
+# Login-Route
 @app.route('/login', methods=('GET', 'POST'))
 def login():
     if request.method == 'POST':
@@ -84,13 +101,21 @@ def login():
             error = 'Incorrect username or password.'
 
         if error is None:
-            session.clear()
-            session['user_id'] = user['id']
+            session.clear()  # Lösche vorherige Sitzungsdaten
+            session['user_id'] = user['id']  # Setze die 'user_id' in der Session
             flash('You are now logged in.')
-            return redirect(url_for('index'))
+            return redirect(url_for('index'))  # Weiterleitung zur Welcome-Seite
 
         flash(error)
     return render_template('login.html')
+
+# Logout-Route
+@app.route('/logout')
+@login_required
+def logout():
+    session.clear()  # Löscht alle Sitzungsdaten, einschließlich 'user_id'
+    flash('You have been logged out.')  # Optional: Erfolgsmeldung
+    return redirect(url_for('login'))  # Weiterleitung zur Login-Seite
 
 if __name__ == '__main__':
     open_port = find_open_port()  # Einen freien Port finden
