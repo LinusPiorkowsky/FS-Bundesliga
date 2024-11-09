@@ -156,6 +156,8 @@ cython_debug/
 
 #extras
 database.db
+# macOS .DS_Store file
+.DS_Store
 
 
 # PyCharm
