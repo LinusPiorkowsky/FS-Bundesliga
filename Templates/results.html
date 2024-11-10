@@ -1,12 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Results</title>
+    <title>Match Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
 </head>
+
 <body>
-    <h1>Results</h1>
-    <p>{{ results.message }}</p>
+    <a href="{{ url_for('index') }}">
+        <button type="button">Back to Menu</button>
+    </a>
+
+    <h1>Match Results</h1>
+    <p>{{ filter_summary }}</p> <!-- Display selected season and gameday -->
+
+    <!-- Form for filtering by Season and Gameday -->
+    <form method="get" action="{{ url_for('view_results') }}">
+        <label for="season">Season:</label>
+        <select name="season" id="season" onchange="this.form.submit()">
+            {% for s in seasons %}
+                <option value="{{ s }}" {% if selected_season == s %}selected{% endif %}>
+                    {{ s }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label for="gameday">Gameday:</label>
+        <select name="gameday" id="gameday">
+            {% for g in gamedays %}
+                <option value="{{ g }}" {% if selected_gameday == g %}selected{% endif %}>
+                    {{ g }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Filter</button>
+    </form>
+
+    <div class="container">
+        <!-- Results Table -->
+        <div>
+            <h2>Results</h2>
+            {% if results %}
+                <table>
+                    <tr>
+                        <th>Season</th>
+                        <th>Gameday</th>
+                        <th>Date</th>
+                        <th>Home Team</th>
+                        <th>Home Goals</th>
+                        <th>Away Goals</th>
+                        <th>Away Team</th>
+                    </tr>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result['Season'] }}</td>
+                        <td>{{ result['Gameday'] }}</td>
+                        <td>{{ result['Date'] }}</td>
+                        <td>{{ result['HomeTeam'] }}</td>
+                        <td>{{ result['HomeTeamGoals'] }}</td>
+                        <td>{{ result['AwayTeamGoals'] }}</td>
+                        <td>{{ result['AwayTeam'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <p>No results found for the selected season and gameday.</p>
+            {% endif %}
+        </div>
+
+        <!-- Rankings Table -->
+        <div>
+            <h2>Team Rankings</h2>
+            <table>
+                <tr>
+                    <th>Rank</th>
+                    <th>Team</th>
+                    <th>Goals Scored</th>
+                    <th>Goals Conceded</th>
+                    <th>Points</th>
+                </tr>
+                {% for team in rankings %}
+                <tr>
+                    <td>{{ team['Rank'] }}</td>
+                    <td>{{ team['Team'] }}</td>
+                    <td>{{ team['GoalsScored'] }}</td>
+                    <td>{{ team['GoalsConceded'] }}</td>
+                    <td>{{ team['Points'] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
 </body>
 </html>

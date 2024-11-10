@@ -1,3 +1,4 @@
+import pandas as pd
 import os
 import socket
 from flask import Flask, render_template, redirect, url_for, request, flash, session
@@ -59,13 +60,72 @@ def index():
     user = db_conn.execute('SELECT username FROM users WHERE id = ?', (user_id,)).fetchone()
     return render_template('welcome.html', username=user['username'])
 
-# Results Route
-@app.route('/results')
+@app.route('/results', methods=['GET'])
 @login_required
-def results():
-    # tbd erstmal filler
-    results_data = {"message": "This is where results will be displayed."}
-    return render_template('results.html', results=results_data)
+def view_results():
+    # Load CSV data
+    bundesliga = pd.read_csv('Datasets/Bundesliga.csv', delimiter=';')
+    updated_games = pd.read_csv('Datasets/Updated_Games.csv', delimiter=';')
+    
+    # Combine both dataframes for seamless filtering
+    games = pd.concat([bundesliga, updated_games])
+
+    # Determine the latest season and gameday from `Updated_Games.csv` for default values
+    latest_season = updated_games['Season'].max()
+    latest_gameday = updated_games[updated_games['Season'] == latest_season]['Gameday'].max()
+
+    # Set default season and gameday to the latest if no input is provided
+    season = int(request.args.get('season') or latest_season)
+    gameday = int(request.args.get('gameday') or latest_gameday)
+
+    # Filter results for the selected season and gameday
+    results = games[(games['Season'] == season) & (games['Gameday'] == gameday)]
+    
+    # Filter standings data up to the selected gameday for rankings
+    standings_data = games[(games['Season'] == season) & (games['Gameday'] <= gameday)]
+    
+    # Calculate points, goals scored, and goals conceded for each team
+    standings_data['HomePoints'] = standings_data.apply(lambda x: 3 if x['HomeTeamGoals'] > x['AwayTeamGoals'] else 1 if x['HomeTeamGoals'] == x['AwayTeamGoals'] else 0, axis=1)
+    standings_data['AwayPoints'] = standings_data.apply(lambda x: 3 if x['AwayTeamGoals'] > x['HomeTeamGoals'] else 1 if x['HomeTeamGoals'] == x['AwayTeamGoals'] else 0, axis=1)
+    
+    # Aggregate home and away stats
+    home_stats = standings_data.groupby('HomeTeam').agg(
+        Points=('HomePoints', 'sum'),
+        GoalsScored=('HomeTeamGoals', 'sum'),
+        GoalsConceded=('AwayTeamGoals', 'sum')
+    ).reset_index().rename(columns={'HomeTeam': 'Team'})
+
+    away_stats = standings_data.groupby('AwayTeam').agg(
+        Points=('AwayPoints', 'sum'),
+        GoalsScored=('AwayTeamGoals', 'sum'),
+        GoalsConceded=('HomeTeamGoals', 'sum')
+    ).reset_index().rename(columns={'AwayTeam': 'Team'})
+
+    # Combine home and away stats for total standings
+    combined_stats = pd.concat([home_stats, away_stats]).groupby('Team').sum()
+    combined_stats['GoalDifference'] = combined_stats['GoalsScored'] - combined_stats['GoalsConceded']
+    combined_stats = combined_stats.sort_values(by=['Points', 'GoalDifference', 'GoalsScored'], ascending=False).reset_index()
+
+    # Assign ranks
+    combined_stats['Rank'] = combined_stats.index + 1
+
+    # Extract distinct seasons and gamedays for dropdowns
+    seasons = sorted(games['Season'].unique(), reverse=True)
+    
+    # Determine the maximum available gameday for the selected season
+    max_gameday_for_season = games[games['Season'] == season]['Gameday'].max()
+    available_gamedays = sorted(games[(games['Season'] == season) & (games['Gameday'] <= max_gameday_for_season)]['Gameday'].unique())
+
+    return render_template(
+        'results.html',
+        results=results.to_dict(orient='records'),
+        seasons=seasons,
+        gamedays=available_gamedays,
+        rankings=combined_stats.to_dict(orient='records'),
+        selected_season=season,
+        selected_gameday=gameday,
+        filter_summary=f"Results for Season {season}, Gameday {gameday}"
+    )
 
 # Prediction Route
 @app.route('/prediction')
