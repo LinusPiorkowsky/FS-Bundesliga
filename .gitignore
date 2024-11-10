@@ -62,7 +62,7 @@ db.sqlite3
 db.sqlite3-journal
 
 # Flask stuff:
-instance/
+#instance/
 .webassets-cache
 
 # Scrapy stuff:
@@ -156,6 +156,7 @@ cython_debug/
 
 #extras
 database.db
+users.db
 # macOS .DS_Store file
 .DS_Store
 
