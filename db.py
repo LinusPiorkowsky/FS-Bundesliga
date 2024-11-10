@@ -3,7 +3,7 @@ from flask import current_app, g
 import os
 
 def get_db():
-    """Hol dir eine Verbindung zur Datenbank."""
+    """Get a database connection."""
     if 'db' not in g:
         g.db = sqlite3.connect(
             current_app.config['DATABASE'],
@@ -21,9 +21,14 @@ def close_db(e=None):
 def init_db():
     """Initialisiere die Datenbank, wenn sie noch nicht existiert."""
     db = get_db()
-    with current_app.open_resource(os.path.join(current_app.instance_path, 'Sql', 'create_tables.sql')) as f:
-        db.executescript(f.read().decode('utf8'))
-    print("Database initialized.")
+    sql_path = os.path.join(current_app.instance_path, 'Sql', 'create_tables.sql')
+    
+    try:
+        with current_app.open_resource(sql_path) as f:
+            db.executescript(f.read().decode('utf8'))
+        print("Database initialized.")
+    except Exception as e:
+        print(f"Error initializing database: {e}")
 
 def init_app(app):
     """Registriere die Datenbankfunktionen und initialisiere die DB bei Bedarf."""
