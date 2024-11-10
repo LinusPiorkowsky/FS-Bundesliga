@@ -14,9 +14,9 @@ db.init_app(app)
 
 # Stelle sicher, dass der Ordner für Instanzdateien existiert
 try:
-    os.makedirs(app.instance_path)
-except OSError:
-    pass
+    os.makedirs(app.instance_path, exist_ok=True)
+except OSError as e:
+    print(f"Error creating instance folder: {e}")
 
 # Funktion, um einen freien Port zu finden
 def find_open_port():
@@ -33,19 +33,22 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Logout automatisch beim Start der Anwendung ausführen
-@app.before_first_request
-def logout_automatically():
-    # Wenn der Benutzer bereits eingeloggt ist, logge ihn aus
-    if 'user_id' in session:
-        session.clear()  # Löscht die Sitzung
-        flash('You have been logged out automatically.')  # Optional: Erfolgsmeldung
+# Boolean Logout und DB laufen nur einmal
+first_request_flag = True
 
-@app.before_first_request
-def initialize_db():
-    """Stelle sicher, dass die DB bei der ersten Anfrage initialisiert wird."""
-    with app.app_context():
-        db.init_db()
+@app.before_request
+def setup_before_first_request():
+    global first_request_flag
+    if first_request_flag:
+        if 'user_id' in session:
+            session.clear()  # Löscht die Sitzung
+            flash('You have been logged out automatically.')  # Erfolgsmeldung
+
+        # Initialize the database
+        with app.app_context():
+            db.init_db()
+        
+        first_request_flag = False
 
 # Route für die Home-Seite, die nur zugänglich ist, wenn der Benutzer eingeloggt ist
 @app.route('/')
@@ -55,6 +58,22 @@ def index():
     db_conn = db.get_db()
     user = db_conn.execute('SELECT username FROM users WHERE id = ?', (user_id,)).fetchone()
     return render_template('welcome.html', username=user['username'])
+
+# Results Route
+@app.route('/results')
+@login_required
+def results():
+    # tbd erstmal filler
+    results_data = {"message": "This is where results will be displayed."}
+    return render_template('results.html', results=results_data)
+
+# Prediction Route
+@app.route('/prediction')
+@login_required
+def prediction():
+    # tbd - erstmal filler
+    prediction_data = {"message": "This is where predictions will be displayed."}
+    return render_template('prediction.html', prediction=prediction_data)
 
 # Registrierung-Route
 @app.route('/register', methods=('GET', 'POST'))
@@ -110,7 +129,7 @@ def login():
     return render_template('login.html')
 
 # Logout-Route
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 @login_required
 def logout():
     session.clear()  # Löscht alle Sitzungsdaten, einschließlich 'user_id'
