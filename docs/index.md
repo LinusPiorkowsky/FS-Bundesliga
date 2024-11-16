@@ -3,26 +3,21 @@ title: Home
 nav_order: 0
 ---
 
-{: .attention }
-> Any text enclosed by `[ ]` are placeholders, including the opening and closing brackets.
->
-> You may delete this `attention` box.
+# Bundesliga Predictor
 
-# [Project Name]
-
-[Project description]
+The Bundesliga Predictor is a cutting-edge app that forecasts outcomes for each week’s Bundesliga matches by analyzing past results, team performance, and overall efficiency. It also provides in-depth insights into historical data and detailed analytics on your favorite team.
 
 ## Team members
 
-### [Jane Dane]
+### Linus Piorkowsky
 
 About
-: Some info about Jane
+: Linus likes football and statistics. This is his first web-based python project, hes excited to be part of the team.
 
 Matr.-Nr.
-: 1234567
+: 77211984086
 
-### [Joe Doe]
+### Henry Lückewille
 
 About
 : Some info about Joe
