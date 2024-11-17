@@ -57,8 +57,8 @@ def setup_before_first_request():
 def index():
     user_id = session.get('user_id')
     db_conn = db.get_db()
-    user = db_conn.execute('SELECT username FROM users WHERE id = ?', (user_id,)).fetchone()
-    return render_template('welcome.html', username=user['username'])
+    user = db_conn.execute('SELECT username, favourite_team FROM users WHERE id = ?', (user_id,)).fetchone()
+    return render_template('welcome.html', username=user['username'], favourite_team=user['favourite_team'])
 
 @app.route('/results', methods=['GET'])
 @login_required
@@ -135,13 +135,22 @@ def prediction():
     prediction_data = {"message": "This is where predictions will be displayed."}
     return render_template('prediction.html', prediction=prediction_data)
 
-# Registrierung-Route
+# Funktion für Bundesliga Team (18) für auswahl bei registrierung
+def load_bundesliga_teams():
+    file_path = 'Datasets/Updated_Games.csv' 
+    bundesliga_teams = pd.read_csv(file_path, delimiter=';')
+    unique_teams = pd.unique(bundesliga_teams[['HomeTeam', 'AwayTeam']].values.ravel())
+    return sorted(unique_teams)
+
+unique_teams = load_bundesliga_teams()
+
 @app.route('/register', methods=('GET', 'POST'))
 def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         confirm_password = request.form['confirm_password']
+        favourite_team = request.form.get('favourite_team')
         db_conn = db.get_db()
         error = None
 
@@ -151,20 +160,23 @@ def register():
             error = 'Password is required.'
         elif password != confirm_password:
             error = 'Passwords do not match.'
+        elif not favourite_team:
+            error = 'Favourite team is required.'
         elif db_conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone() is not None:
             error = f'User {username} is already registered.'
 
         if error is None:
             db_conn.execute(
-                'INSERT INTO users (username, password) VALUES (?, ?)',
-                (username, generate_password_hash(password))
+                'INSERT INTO users (username, password, favourite_team) VALUES (?, ?, ?)',
+                (username, generate_password_hash(password), favourite_team)
             )
             db_conn.commit()
             flash('Registration successful! Please log in.')
-            return redirect(url_for('login'))  # Nach der Registrierung zur Login-Seite weiterleiten
+            return redirect(url_for('login'))
 
         flash(error)
-    return render_template('register.html')
+    return render_template('register.html', teams=unique_teams)
+
 
 # Login-Route
 @app.route('/login', methods=('GET', 'POST'))
@@ -195,6 +207,18 @@ def logout():
     session.clear()  # Löscht alle Sitzungsdaten, einschließlich 'user_id'
     flash('You have been logged out.')  # Optional: Erfolgsmeldung
     return redirect(url_for('login'))  # Weiterleitung zur Login-Seite
+
+# Route für favoriten Team
+@app.route('/team_insights', methods=['GET'])
+@login_required
+def team_insights():
+    user_id = session.get('user_id')
+    db_conn = db.get_db()
+    
+    # sql für lieblingsteam von User
+    user = db_conn.execute('SELECT favourite_team FROM users WHERE id = ?', (user_id,)).fetchone()
+    favourite_team = user['favourite_team']
+    return render_template('team_insights.html', favourite_team=favourite_team)
 
 if __name__ == '__main__':
     open_port = find_open_port()  # Einen freien Port finden
