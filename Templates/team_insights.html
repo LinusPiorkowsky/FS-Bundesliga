@@ -7,7 +7,44 @@
 </head>
 <body>
     <h1>{{ favourite_team }} Insights</h1>
-    <p>TBD or In Work</p>
+    <table border="1">
+        <tr>
+            <th>Insight</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Performance (Last 5 Games)</td>
+            <td>{{ insights['Performance (Last 5 Games)'] | join(', ') }}</td>
+        </tr>
+        <tr>
+            <td>Average Shots on Target (Last 10 Games)</td>
+            <td>{{ insights['Average Shots on Target (Last 10 Games)'] }}</td>
+        </tr>
+        <tr>
+            <td>Average Goals Scored (Last 10 Games)</td>
+            <td>{{ insights['Average Goals Scored (Last 10 Games)'] }}</td>
+        </tr>
+        <tr>
+            <td>Efficiency (Goals per Shot)</td>
+            <td>{{ insights['Efficiency (Goals per Shot)'] }}</td>
+        </tr>
+        <tr>
+            <td>Average Goals Conceded (Last 10 Games)</td>
+            <td>{{ insights['Average Goals Conceded (Last 10 Games)'] }}</td>
+        </tr>
+        <tr>
+            <td>Clean Sheets (Last 10 Games)</td>
+            <td>{{ insights['Clean Sheets (Last 10 Games)'] }}</td>
+        </tr>
+        <tr>
+            <td>Highest Win of 2024</td>
+            <td>{{ insights['Highest Win of 2024'] }}</td>
+        </tr>
+        <tr>
+            <td>Overall Rating</td>
+            <td>{{ insights['Overall Rating'] }}</td>
+        </tr>
+    </table>
     <form action="{{ url_for('index') }}" method="get">
         <button type="submit">Back to Home</button>
     </form>

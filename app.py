@@ -13,6 +13,10 @@ app.config['SECRET_KEY'] = 'supersecretkey'
 # Initialisiere die Datenbank mit der App
 db.init_app(app)
 
+# Datensätze
+bundesliga_df = pd.read_csv("Datasets/Bundesliga.csv", delimiter=';')
+updated_games_df = pd.read_csv("Datasets/Updated_Games.csv", delimiter=';')
+
 # Stelle sicher, dass der Ordner für Instanzdateien existiert
 try:
     os.makedirs(app.instance_path, exist_ok=True)
@@ -208,6 +212,73 @@ def logout():
     flash('You have been logged out.')  # Optional: Erfolgsmeldung
     return redirect(url_for('login'))  # Weiterleitung zur Login-Seite
 
+### Berechnungen für Lieblingsteam
+combined_df = pd.concat([bundesliga_df, updated_games_df])
+
+combined_df['Date'] = pd.to_datetime(combined_df['Date'], dayfirst=True)
+combined_df.sort_values(by='Date', ascending=False, inplace=True)
+
+# Funktion für berechnung
+def get_team_insights(team_name):
+    # Filter für das Team
+    team_matches = combined_df[(combined_df['HomeTeam'] == team_name) | (combined_df['AwayTeam'] == team_name)]
+    
+    # Perfomace 5 letzte spiele
+    last_5_games = team_matches.head(5)
+    performance_last_5 = last_5_games.apply(
+        lambda row: 'Win' if (row['HomeTeam'] == team_name and row['HomeTeamGoals'] > row['AwayTeamGoals']) or 
+                                (row['AwayTeam'] == team_name and row['AwayTeamGoals'] > row['HomeTeamGoals']) else 
+                    'Draw' if row['HomeTeamGoals'] == row['AwayTeamGoals'] else 'Loss', axis=1)
+    
+    # Berechnungen für 10 letzte Spiele
+    last_10_games = team_matches.head(10)
+    total_shots_on_target = last_10_games.apply(
+        lambda row: row['HomeTeamShotsOnTarget'] if row['HomeTeam'] == team_name else row['AwayTeamShotsOnTarget'], axis=1).mean()
+    
+    avg_goals_scored = last_10_games.apply(
+        lambda row: row['HomeTeamGoals'] if row['HomeTeam'] == team_name else row['AwayTeamGoals'], axis=1).mean()
+    
+    avg_goals_conceded = last_10_games.apply(
+        lambda row: row['AwayTeamGoals'] if row['HomeTeam'] == team_name else row['HomeTeamGoals'], axis=1).mean()
+    
+    efficiency = last_10_games.apply(
+        lambda row: (row['HomeTeamGoals'] / row['HomeTeamShotsOnTarget']) if row['HomeTeam'] == team_name else
+                    (row['AwayTeamGoals'] / row['AwayTeamShotsOnTarget']), axis=1).mean(skipna=True)
+    clean_sheets = last_10_games.apply(
+        lambda row: 1 if (row['HomeTeam'] == team_name and row['AwayTeamGoals'] == 0) or 
+                          (row['AwayTeam'] == team_name and row['HomeTeamGoals'] == 0) else 0, axis=1).sum()
+    
+    # Höchster Sieg
+    season_2024 = combined_df[combined_df['Season'] == 2024]
+    season_2024_team = season_2024[(season_2024['HomeTeam'] == team_name) | (season_2024['AwayTeam'] == team_name)]
+    season_2024_team['GoalsScored'] = season_2024_team.apply(
+        lambda row: row['HomeTeamGoals'] if row['HomeTeam'] == team_name else row['AwayTeamGoals'], axis=1
+    )
+    season_2024_team['GoalsConceded'] = season_2024_team.apply(
+        lambda row: row['AwayTeamGoals'] if row['HomeTeam'] == team_name else row['HomeTeamGoals'], axis=1
+    )
+    highest_win_row = season_2024_team.loc[season_2024_team['GoalsScored'].idxmax()]
+    highest_win_score = f"{highest_win_row['GoalsScored']}:{highest_win_row['GoalsConceded']}"
+    highest_win_opponent = (
+        highest_win_row['AwayTeam'] if highest_win_row['HomeTeam'] == team_name else highest_win_row['HomeTeam']
+    )
+    highest_win_detail = f"{highest_win_score} vs {highest_win_opponent}"
+    
+    # Overall rating tbd!!!
+    rating = (total_shots_on_target * 0.3 + efficiency * 50 + clean_sheets * 5) / 10 * 100
+    rating = min(max(int(rating), 1), 100)
+    
+    return {
+        "Performance (Last 5 Games)": performance_last_5.tolist(),
+        "Average Shots on Target (Last 10 Games)": total_shots_on_target,
+        "Average Goals Scored (Last 10 Games)": avg_goals_scored,
+        "Efficiency (Goals per Shot)": efficiency,
+        "Average Goals Conceded (Last 10 Games)": avg_goals_conceded,
+        "Clean Sheets (Last 10 Games)": clean_sheets,
+        "Highest Win of 2024": highest_win_detail,
+        "Overall Rating": rating
+    }
+
 # Route für favoriten Team
 @app.route('/team_insights', methods=['GET'])
 @login_required
@@ -215,10 +286,15 @@ def team_insights():
     user_id = session.get('user_id')
     db_conn = db.get_db()
     
-    # sql für lieblingsteam von User
+    # Get the user's favorite team
     user = db_conn.execute('SELECT favourite_team FROM users WHERE id = ?', (user_id,)).fetchone()
     favourite_team = user['favourite_team']
-    return render_template('team_insights.html', favourite_team=favourite_team)
+    
+    # Calculate insights for the favorite team
+    insights = get_team_insights(favourite_team)
+    
+    return render_template('team_insights.html', favourite_team=favourite_team, insights=insights)
+
 
 if __name__ == '__main__':
     open_port = find_open_port()  # Einen freien Port finden
