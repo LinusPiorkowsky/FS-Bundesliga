@@ -34,4 +34,21 @@ nav_order: 6
 
 ## Henry Lückewille
 
-- db.py, database management, login and register routes and htmls, ....
+- **Create Db.py**
+  - database management
+  - implement login, register and logout logic
+    
+- **Simplify the App start within VS2**
+  - Finding a free port if necessary
+  - starting flask within python application
+  - Initializing the database automatically before startig the code
+  
+- **Updating and organizing the Backlog Board**
+  - Organizing thew workflow within Sprints
+  
+- **Debugging the current Application**
+
+- **Data Analysis**
+  - developing mathematical logic to predict match ouutcome
+  
+  
