@@ -20,10 +20,10 @@ Matr.-Nr.
 ### Henry Lückewille
 
 About
-: Some info about Joe
+: Henry likes football and statistics. This is his first web-based python project, hes excited to be part of the team.
 
 Matr.-Nr.
-: 1234567
+: 	77211981526
 
 ## Eidesstattliche Erklärung
 
