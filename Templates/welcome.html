@@ -33,6 +33,17 @@
                 <button type="submit">Logout</button>
             </form>
         </div>
+
+        <div>
+            <h2>All Users:</h2>
+            <ul>
+                <!-- Alle Benutzernamen aus der Datenbank anzeigen -->
+                {% for user in all_users %}
+                    <li>{{ user['username'] }}</li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 </body>
 </html>
+
