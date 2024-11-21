@@ -30,30 +30,14 @@ def find_open_port():
         return s.getsockname()[1]  # Den Port zurückgeben
 
 # Login erforderlich Dekorator
+# Wenn die User_ID in der bestehenden Flask Sitzung existiert, wird der User automatisch eingeloggt
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return redirect(url_for('login'))  # Benutzer zu Login-Seite weiterleiten, wenn nicht eingeloggt
-        return f(*args, **kwargs)
+        return f(*args, **kwargs) #Wenn eingeloggt wird 
     return decorated_function
-
-# Boolean Logout und DB laufen nur einmal
-first_request_flag = True
-
-@app.before_request
-def setup_before_first_request():
-    global first_request_flag
-    if first_request_flag:
-        if 'user_id' in session:
-            session.clear()  # Löscht die Sitzung
-            flash('You have been logged out automatically.')  # Erfolgsmeldung
-
-        # Initialize the database
-        with app.app_context():
-            db.init_db()
-        
-        first_request_flag = False
 
 # Route für die Home-Seite, die nur zugänglich ist, wenn der Benutzer eingeloggt ist
 @app.route('/')
@@ -62,7 +46,9 @@ def index():
     user_id = session.get('user_id')
     db_conn = db.get_db()
     user = db_conn.execute('SELECT username, favourite_team FROM users WHERE id = ?', (user_id,)).fetchone()
-    return render_template('welcome.html', username=user['username'], favourite_team=user['favourite_team'])
+    all_users = db_conn.execute('SELECT username FROM users').fetchall()
+    return render_template('welcome.html', username=user['username'], favourite_team=user['favourite_team'], all_users=all_users)
+    
 
 @app.route('/results', methods=['GET'])
 @login_required
