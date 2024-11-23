@@ -15,6 +15,13 @@ Goals:
 Simple and Functional: Develop a straightforward app with easy-to-understand features, focusing on team comparisons and simple predictions.
 User-Friendly Interface: Make a clean, basic interface that anyone can use without technical knowledge.
 
+Predcition features per game:
+- Probabilty of a win
+- probability of a draw
+- Probbaility to score more or less then 1,5 goals 
+- probabability to score more or less then 2,5 goals
+
+
 ## How to Update the Dataset
 
 Follow these steps to update the `Updatet_games.csv` file with the latest data:
