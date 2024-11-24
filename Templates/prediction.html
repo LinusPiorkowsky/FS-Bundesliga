@@ -4,12 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prediction</title>
+    <style>
+        /* Breite des Gameday-Auswahlfensters erhöhen */
+        #gameday {
+            width: 250px; /* Hier können Sie die gewünschte Breite anpassen */
+            padding: 10px; /* Optional für etwas mehr Abstand im Dropdown */
+            font-size: 16px; /* Für eine bessere Lesbarkeit */
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+    </style>
 </head>
 <body>
     <h1>Prediction</h1>
-    <p>{{ prediction.message }}</p>
-        <form action="{{ url_for('index') }}" method="get">
-        <button type="submit">Back to Home</button>
+    <form action="/handle_prediction" method="post">
+        <label for="gameday">Select a Gameday:</label>
+        <select id="gameday" name="gameday">
+            {% if gamedays %}
+                {% for day in gamedays %}
+                    <option value="{{ day }}">Gameday {{ day }}</option>
+                {% endfor %}
+            {% else %}
+                <option value="">No future gamedays available</option>
+            {% endif %}
+        </select>
+        <button type="submit">Submit</button>
     </form>
 </body>
 </html>
+
+
+
+
