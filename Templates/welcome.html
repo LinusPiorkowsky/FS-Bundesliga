@@ -35,9 +35,45 @@
         </div>
 
         <div>
+            <h2>Latest Gameday Results</h2>
+            <ul>
+                {% for result in latest_results %}
+                    <li>{{ result['HomeTeam'] }} {{ result['HomeTeamGoals'] }} - {{ result['AwayTeamGoals'] }} {{ result['AwayTeam'] }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div>
+            <h2>Current Standings</h2>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team</th>
+                        <th>Goals Scored</th>
+                        <th>Goals Conceded</th>
+                        <th>Goal Difference</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ranking in rankings %}
+                        <tr>
+                            <td>{{ ranking['Rank'] }}</td>
+                            <td>{{ ranking['Team'] }}</td>
+                            <td>{{ ranking['GoalsScored'] }}</td>
+                            <td>{{ ranking['GoalsConceded'] }}</td>
+                            <td>{{ ranking['GoalDifference'] }}</td>
+                            <td>{{ ranking['Points'] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div>
             <h2>All Users:</h2>
             <ul>
-                <!-- Alle Benutzernamen aus der Datenbank anzeigen -->
                 {% for user in all_users %}
                     <li>{{ user['username'] }}</li>
                 {% endfor %}
@@ -46,4 +82,3 @@
     </div>
 </body>
 </html>
-

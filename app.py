@@ -17,6 +17,9 @@ db.init_app(app)
 bundesliga_df = pd.read_csv("Datasets/Bundesliga.csv", delimiter=';')
 updated_games_df = pd.read_csv("Datasets/Updated_Games.csv", delimiter=';')
 
+# Combine both dataframes for seamless filtering
+games = pd.concat([bundesliga_df, updated_games_df])
+
 # Stelle sicher, dass der Ordner für Instanzdateien existiert
 try:
     os.makedirs(app.instance_path, exist_ok=True)
@@ -45,24 +48,69 @@ def login_required(f):
 def index():
     user_id = session.get('user_id')
     db_conn = db.get_db()
+
+    # Fetch user information from the database
     user = db_conn.execute('SELECT username, favourite_team FROM users WHERE id = ?', (user_id,)).fetchone()
     all_users = db_conn.execute('SELECT username FROM users').fetchall()
-    return render_template('welcome.html', username=user['username'], favourite_team=user['favourite_team'], all_users=all_users)
-    
 
+    # Neuste Saison und Gameday
+    latest_season = updated_games_df['Season'].max()
+    latest_gameday = updated_games_df[updated_games_df['Season'] == latest_season]['Gameday'].max()
+
+    # Auf Default setzen
+    season = int(request.args.get('season') or latest_season)
+    gameday = int(request.args.get('gameday') or latest_gameday)
+
+    # Rusults filtern
+    results = updated_games_df[(updated_games_df['Season'] == season) & (updated_games_df['Gameday'] == gameday)]
+
+    # Tabelle filtern
+    standings_data = updated_games_df[(updated_games_df['Season'] == season) & (updated_games_df['Gameday'] <= gameday)]
+
+    # Berechnung für Punkte und Tore
+    standings_data['HomePoints'] = standings_data.apply(lambda x: 3 if x['HomeTeamGoals'] > x['AwayTeamGoals'] else 1 if x['HomeTeamGoals'] == x['AwayTeamGoals'] else 0, axis=1)
+    standings_data['AwayPoints'] = standings_data.apply(lambda x: 3 if x['AwayTeamGoals'] > x['HomeTeamGoals'] else 1 if x['HomeTeamGoals'] == x['AwayTeamGoals'] else 0, axis=1)
+
+    # Stats
+    home_stats = standings_data.groupby('HomeTeam').agg(
+        Points=('HomePoints', 'sum'),
+        GoalsScored=('HomeTeamGoals', 'sum'),
+        GoalsConceded=('AwayTeamGoals', 'sum')
+    ).reset_index().rename(columns={'HomeTeam': 'Team'})
+
+    away_stats = standings_data.groupby('AwayTeam').agg(
+        Points=('AwayPoints', 'sum'),
+        GoalsScored=('AwayTeamGoals', 'sum'),
+        GoalsConceded=('HomeTeamGoals', 'sum')
+    ).reset_index().rename(columns={'AwayTeam': 'Team'})
+
+    # Stats kombinieren für tabelle
+    combined_stats = pd.concat([home_stats, away_stats]).groupby('Team').sum()
+    combined_stats['GoalDifference'] = combined_stats['GoalsScored'] - combined_stats['GoalsConceded']
+    combined_stats = combined_stats.sort_values(by=['Points', 'GoalDifference', 'GoalsScored'], ascending=False).reset_index()
+
+    # Ranking
+    combined_stats['Rank'] = combined_stats.index + 1
+
+    return render_template(
+        'welcome.html',
+        username=user['username'],
+        favourite_team=user['favourite_team'],
+        all_users=[{'username': u['username']} for u in all_users],
+        latest_results=results.to_dict(orient='records'),
+        rankings=combined_stats.to_dict(orient='records'),
+        selected_season=season,
+        selected_gameday=gameday
+    )
+
+### Results ROUTE
 @app.route('/results', methods=['GET'])
 @login_required
-def view_results():
-    # Load CSV data
-    bundesliga = pd.read_csv('Datasets/Bundesliga.csv', delimiter=';')
-    updated_games = pd.read_csv('Datasets/Updated_Games.csv', delimiter=';')
-    
-    # Combine both dataframes for seamless filtering
-    games = pd.concat([bundesliga, updated_games])
+def view_results():    
 
     # Determine the latest season and gameday from `Updated_Games.csv` for default values
-    latest_season = updated_games['Season'].max()
-    latest_gameday = updated_games[updated_games['Season'] == latest_season]['Gameday'].max()
+    latest_season = updated_games_df['Season'].max()
+    latest_gameday = updated_games_df[updated_games_df['Season'] == latest_season]['Gameday'].max()
 
     # Set default season and gameday to the latest if no input is provided
     season = int(request.args.get('season') or latest_season)
