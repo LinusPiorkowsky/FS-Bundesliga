@@ -117,14 +117,25 @@ def view_results():
         filter_summary=f"Results for Season {season}, Gameday {gameday}"
     )
 
-# Prediction Route
 @app.route('/prediction')
 @login_required
 def prediction():
-    # tbd - erstmal filler
-    prediction_data = {"message": "This is where predictions will be displayed."}
-    return render_template('prediction.html', prediction=prediction_data)
+    # zukünftige Spieltage laden und in Dropdown Menü laden
+    games_df = pd.read_csv('Datasets/gameplan_24_25.csv')
+    games_df['Date'] = pd.to_datetime(games_df['Date'], dayfirst=True)
+    futuregames = games_df[games_df['Date'] > pd.to_datetime('today')]
 
+    if futuregames.empty:
+        gamedays = []
+    else:
+        gamedays = sorted(futuregames['Gameday'].unique())
+    
+    print("Gamedays:", gamedays)
+
+    # Rückgabe an die Vorlage
+    return render_template('prediction.html', gamedays=gamedays)
+
+    
 # Funktion für Bundesliga Team (18) für auswahl bei registrierung
 def load_bundesliga_teams():
     file_path = 'Datasets/Updated_Games.csv' 
