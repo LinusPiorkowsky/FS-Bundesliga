@@ -171,3 +171,48 @@ table tr:nth-child(even) {
         font-size: 0.9rem;
     }
 }
+/* Form Container */
+.form-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+/* Form Group Styling */
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+small {
+    display: block;
+    font-size: 0.9rem;
+    color: #555;
+    margin-top: -5px;
+    margin-bottom: 10px;
+}
+.messages {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+    color: #cc0000; /* Red for error or important messages */
+    font-size: 1rem;
+}
+
+.messages li {
+    margin-bottom: 5px;
+}
