@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='CSS/styles.css') }}">
+    <style>
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -15,6 +22,14 @@
         </header>
 
         <form method="post" class="form-container">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="error-message">
+                        {{ messages[0] }}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" name="username" id="username" required>

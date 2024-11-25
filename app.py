@@ -398,8 +398,8 @@ def register():
                 (username, generate_password_hash(password), favourite_team)
             )
             db_conn.commit()
-            flash('Registration successful! Please log in.')
-            return redirect(url_for('login'))
+            flash('Registration successful! Please log in.', 'success')
+            return redirect(url_for('login')) 
 
         flash(error)
     return render_template('register.html', teams=unique_teams)
