@@ -1,0 +1,173 @@
+/* Overall Styling */
+body {
+    background-color: #f4f4f9; /* Light gray for a modern look */
+    color: #333; /* Neutral text color */
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff; /* White for content sections */
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Header Styling */
+header {
+    margin-bottom: 20px;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    color: #0055cc; /* Lighter blue */
+    margin-bottom: 10px;
+}
+
+header p {
+    font-size: 1.2rem;
+    color: #555; /* Neutral gray for description */
+}
+
+header .logo {
+    width: 120px; /* Set a fixed width for the logo */
+    margin: 10px 0;
+}
+
+/* Buttons Styling */
+.buttons form {
+    display: inline-block;
+    margin: 5px;
+}
+
+button {
+    background-color: #D3101C; /* Softer red */
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #e65c5c; /* Slightly darker red on hover */
+}
+
+/* Table Styling */
+table {
+    width: 80%; /* Center and reduce the table width */
+    margin: 20px auto;
+    border-collapse: collapse;
+    font-size: 1rem;
+}
+
+table thead tr {
+    background-color: #0055cc; /* Lighter blue */
+    color: #ffffff;
+}
+
+table th, table td {
+    border: 1px solid #dddddd;
+    padding: 10px;
+    text-align: center; /* Center-align text in cells */
+}
+
+table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Rank Colors */
+.rank-color {
+    width: 5px;
+}
+
+.rank-1 .rank-color,
+.rank-2 .rank-color,
+.rank-3 .rank-color,
+.rank-4 .rank-color {
+    background-color: #0055cc; /* Blue for positions 1-4 */
+}
+
+.rank-5 .rank-color {
+    background-color: #ff9900;
+}
+
+.rank-6 .rank-color {
+    background-color: #00cc44; /* Orange for position 7 */
+}
+
+.rank-16 .rank-color,
+.rank-17 .rank-color,
+.rank-18 .rank-color {
+    background-color: #cc0000; /* Red for relegation zone */
+}
+
+/* Legend */
+.legend {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.legend ul {
+    list-style: none;
+    padding: 0;
+}
+
+.legend li {
+    font-size: 0.9rem;
+    margin: 5px 0;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.legend li::before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border-radius: 50%;
+}
+
+.legend .blue::before {
+    background-color: #0055cc; /* Blue */
+}
+
+.legend .green::before {
+    background-color: #00cc44; /* Green */
+}
+
+.legend .orange::before {
+    background-color: #ff9900; /* Orange */
+}
+
+.legend .red::before {
+    background-color: #cc0000; /* Red */
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+
+    header h1 {
+        font-size: 2rem;
+    }
+
+    button {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+    }
+
+    table {
+        font-size: 0.9rem;
+    }
+}

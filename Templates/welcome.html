@@ -3,51 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
+    <title>Bundesliga Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/styles.css') }}">
 </head>
 <body>
-    <div>
+    <div class="container">
         <header>
-            <h1>Welcome, {{ username }}!</h1>
-            <p>Explore insights, predictions, and more.</p>
+            <h1>Bundesliga Predictor</h1>
+            <img src="{{ url_for('static', filename='Images/bundesliga-logo.png') }}" alt="Bundesliga Logo" class="logo">
+            <p>Predict, track, and enjoy all Bundesliga matches with insightful analytics!</p>
         </header>
 
-        <div>
-            <!-- Results Button -->
+        <div class="buttons">
             <form action="{{ url_for('view_results') }}" method="get" style="display:inline;">
                 <button type="submit">Results</button>
             </form>
 
-            <!-- Prediction Button -->
             <form action="{{ url_for('prediction') }}" method="get" style="display:inline;">
                 <button type="submit">Prediction</button>
             </form>
 
-            <!-- Favorite Team Button -->
             <form action="{{ url_for('team_insights') }}" method="get" style="display:inline;">
                 <button type="submit">{{ favourite_team }}</button>
             </form>
 
-            <!-- Logout Button -->
             <form action="{{ url_for('logout') }}" method="POST" style="display:inline;">
                 <button type="submit">Logout</button>
             </form>
         </div>
 
-        <div>
+        <!-- Latest Gameday Results Section -->
+        <div class="results">
             <h2>Latest Gameday Results</h2>
-            <ul>
-                {% for result in latest_results %}
-                    <li>{{ result['HomeTeam'] }} {{ result['HomeTeamGoals'] }} - {{ result['AwayTeamGoals'] }} {{ result['AwayTeam'] }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div>
-            <h2>Current Standings</h2>
-            <table border="1">
+            <table>
                 <thead>
                     <tr>
+                        <th>Home Team</th>
+                        <th>Home Goals</th>
+                        <th>Away Goals</th>
+                        <th>Away Team</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in latest_results %}
+                        <tr>
+                            <td>{{ result['HomeTeam'] }}</td>
+                            <td>{{ result['HomeTeamGoals'] }}</td>
+                            <td>{{ result['AwayTeamGoals'] }}</td>
+                            <td>{{ result['AwayTeam'] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Current Standings Section -->
+        <div class="standings">
+            <h2>Current Standings</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th></th> <!-- For the rank color sidebar -->
                         <th>Rank</th>
                         <th>Team</th>
                         <th>Goals Scored</th>
@@ -58,7 +74,8 @@
                 </thead>
                 <tbody>
                     {% for ranking in rankings %}
-                        <tr>
+                        <tr class="rank-{{ ranking['Rank'] }}">
+                            <td class="rank-color"></td> <!-- Rank color sidebar -->
                             <td>{{ ranking['Rank'] }}</td>
                             <td>{{ ranking['Team'] }}</td>
                             <td>{{ ranking['GoalsScored'] }}</td>
@@ -69,15 +86,16 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
 
-        <div>
-            <h2>All Users:</h2>
-            <ul>
-                {% for user in all_users %}
-                    <li>{{ user['username'] }}</li>
-                {% endfor %}
-            </ul>
+            <div class="legend">
+                <h3>Qualification/Regulation</h3>
+                <ul>
+                    <li class="blue">Champions League Group Stage</li>
+                    <li class="green">Europa League Group Stage</li>
+                    <li class="orange">Europa Conference League Qualifiers</li>
+                    <li class="red">Relegation Zone</li>
+                </ul>
+            </div>
         </div>
     </div>
 </body>
