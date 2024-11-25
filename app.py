@@ -214,19 +214,32 @@ def handle_prediction():
 
         past_season_data = updated_games[updated_games['Season'] != current_season]
 
-        def calculate_team_statistics(team_name, as_home=True, as_away=True):
+        def calculate_team_statistics(team_name, opponent_team, as_home=True, as_away=True):
             """
             Berechnet die gewichteten Statistiken für ein Team basierend auf Heim- und Auswärtsspielen.
+            Nur Saisons, in denen beide Teams in der Liga aktiv waren, werden berücksichtigt.
             """
+            # Gemeinsame Saisons ermitteln
+            team_seasons = set(past_season_data[past_season_data['HomeTeam'] == team_name]['Season']).union(
+                past_season_data[past_season_data['AwayTeam'] == team_name]['Season']
+            )
+            opponent_seasons = set(past_season_data[past_season_data['HomeTeam'] == opponent_team]['Season']).union(
+                past_season_data[past_season_data['AwayTeam'] == opponent_team]['Season']
+            )
+            common_seasons = team_seasons.intersection(opponent_seasons)
+
+            # Filtern der Daten basierend auf gemeinsamen Saisons
+            relevant_past_data = past_season_data[past_season_data['Season'].isin(common_seasons)]
+
             if as_home:
                 home_stats = current_season_data[current_season_data['HomeTeam'] == team_name]
-                home_stats_past = past_season_data[past_season_data['HomeTeam'] == team_name]
+                home_stats_past = relevant_past_data[relevant_past_data['HomeTeam'] == team_name]
             else:
                 home_stats = home_stats_past = pd.DataFrame()
 
             if as_away:
                 away_stats = current_season_data[current_season_data['AwayTeam'] == team_name]
-                away_stats_past = past_season_data[past_season_data['AwayTeam'] == team_name]
+                away_stats_past = relevant_past_data[relevant_past_data['AwayTeam'] == team_name]
             else:
                 away_stats = away_stats_past = pd.DataFrame()
 
@@ -249,44 +262,54 @@ def handle_prediction():
             return stats
 
 
+
         def calculate_win_probability(home_team, away_team):
             """
-            Berechnet die Siegwahrscheinlichkeit basierend auf den gewichteten Statistiken.
-            Die Wahrscheinlichkeit wird so normiert, dass negative Werte zwischen 0-50% 
-            und positive Werte zwischen 50-100% liegen.
+            Berechnet die Siegwahrscheinlichkeit basierend auf gewichteten Statistiken.
+            Berücksichtigt Tore geschossen/kassiert zu Hause und auswärts, sowie Gesamtvorteile.
+            Die Wahrscheinlichkeit wird normiert: Negative Werte zwischen 0-50%, positive Werte zwischen 50-100%.
             """
-            # Berechne Teamstatistiken für beide Teams
-            home_stats = calculate_team_statistics(home_team, as_home=True, as_away=False)
-            away_stats = calculate_team_statistics(away_team, as_home=False, as_away=True)
+            # Berechne Teamstatistiken mit korrekter Übergabe des Gegners
+            home_stats = calculate_team_statistics(home_team, opponent_team=away_team, as_home=True, as_away=False)
+            away_stats = calculate_team_statistics(away_team, opponent_team=home_team, as_home=False, as_away=True)
 
-            # Berechne den Heimvorteil (Tore erzielt - Tore zugelassen des Auswärtsteams)
-            home_advantage = home_stats['goals_scored'] - away_stats['goals_conceded']
-            # Berechne den Auswärtsvorteil (Tore erzielt - Tore zugelassen des Heimteams)
-            away_advantage = away_stats['goals_scored'] - home_stats['goals_conceded']
+            # Durchschnittliche Tore Heimteam (Heim) und Auswärtsteam (Auswärts)
+            home_avg_scored = home_stats['goals_scored']
+            home_avg_conceded = home_stats['goals_conceded']
+            away_avg_scored = away_stats['goals_scored']
+            away_avg_conceded = away_stats['goals_conceded']
 
-            # Gesamtvorteil beider Teams
+            # Gesamtstatistiken
+            home_advantage = (home_avg_scored - away_avg_conceded)  # Heimteam Vorteil basierend auf Heimtoren
+            away_advantage = (away_avg_scored - home_avg_conceded)  # Auswärtsteam Vorteil basierend auf Auswärtstoren
+
+            # Gesamtvorteil unter Berücksichtigung beider Metriken
             total_advantage = home_advantage + away_advantage
+
+            print(f"{home_team} (Heim): Tore geschossen: {home_avg_scored}, Tore kassiert: {home_avg_conceded}")
+            print(f"{away_team} (Auswärts): Tore geschossen: {away_avg_scored}, Tore kassiert: {away_avg_conceded}")
+            print(f"Vorteil Heimteam: {home_advantage}, Vorteil Auswärtsteam: {away_advantage}")
+            print(f"Gesamter Vorteil: {total_advantage}")
 
             if total_advantage == 0:
                 # Wenn der Gesamtvorteil 0 ist, nehmen wir 50% für beide
                 return 50, 50
 
-            # Wenn der Vorteil positiv ist (Heimteam favorisiert)
+            # Berechne die Wahrscheinlichkeiten
             if total_advantage > 0:
                 home_probability = 50 + (total_advantage / abs(total_advantage)) * (total_advantage / 2)
                 away_probability = 100 - home_probability
-            # Wenn der Vorteil negativ ist (Auswärtsteam favorisiert)
             else:
                 away_probability = 50 + (total_advantage / abs(total_advantage)) * (abs(total_advantage) / 2)
                 home_probability = 100 - away_probability
 
-            # Sicherstellen, dass die Wahrscheinlichkeiten nicht außerhalb des Bereichs liegen
+            # Sicherstellen, dass die Wahrscheinlichkeiten im Bereich [0, 100] liegen
             home_probability = max(0, min(100, home_probability))
             away_probability = max(0, min(100, away_probability))
 
+            print(f"Wahrscheinlichkeiten: {home_probability:.2f}% für {home_team} und {away_probability:.2f}% für {away_team}")
+
             return round(home_probability, 2), round(away_probability, 2)
-
-
 
 
         # Berechnung der Wahrscheinlichkeiten für jedes Spiel
