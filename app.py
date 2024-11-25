@@ -7,7 +7,7 @@ import db
 from functools import wraps
 from rapidfuzz import process
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='Static')
 app.config['DATABASE'] = os.path.join(app.instance_path, 'users.db')
 app.config['SECRET_KEY'] = 'supersecretkey'
 
