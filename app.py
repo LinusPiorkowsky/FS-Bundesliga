@@ -6,6 +6,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import db
 from functools import wraps
 from rapidfuzz import process
+import json
+import re
 
 app = Flask(__name__, static_folder='Static')
 app.config['DATABASE'] = os.path.join(app.instance_path, 'users.db')
@@ -16,7 +18,6 @@ db.init_app(app)
 
 # Datensatz
 df = pd.read_csv("Datasets/Updated_Games.csv", delimiter=';')
-
 
 # Stelle sicher, dass der Ordner für Instanzdateien existiert
 try:
@@ -343,31 +344,21 @@ def handle_prediction():
         return render_template('selectedprediction.html', gameday=selected_gameday, games_list=games_list)
 
 
-
-
-    
 # Funktion für Bundesliga Team (18) für auswahl bei registrierung
-def load_bundesliga_teams(df):
-    # Check if 'Season' column exists
-    if 'Season' not in df.columns:
-        raise ValueError("The dataset must contain a 'Season' column.")
-    
-    # Find the maximum season
-    max_season = df['Season'].max()
-    
-    # Filter rows for the maximum season
-    max_season_teams = df[df['Season'] == max_season]
-    
-    # Extract unique teams from 'HomeTeam' and 'AwayTeam' columns
-    unique_teams = pd.unique(max_season_teams[['HomeTeam', 'AwayTeam']].values.ravel())
-    
-    # Return sorted list of unique teams
-    return sorted(unique_teams)
-
-unique_teams = load_bundesliga_teams(df)
+def load_bundesliga_teams_from_json(json_path):
+    try:
+        with open(json_path, "r", encoding="utf-8") as json_file:
+            data = json.load(json_file)
+        return sorted(data.get("BundesligaTeams", []))
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        raise ValueError("Error loading Bundesliga teams from JSON: " + str(e))
 
 @app.route('/register', methods=('GET', 'POST'))
 def register():
+    # Load Bundesliga teams from JSON file
+    json_path = "Static/Data/teams.json"
+    unique_teams = load_bundesliga_teams_from_json(json_path)
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -376,10 +367,23 @@ def register():
         db_conn = db.get_db()
         error = None
 
+        # Validate form inputs
         if not username:
             error = 'Username is required.'
+        elif len(username) < 3:
+            error = 'Username must be at least 3 characters long.'
         elif not password:
             error = 'Password is required.'
+        elif len(password) < 6:
+            error = 'Password must be at least 6 characters long.'
+        elif not re.search(r'[A-Z]', password):
+            error = 'Password must contain at least one uppercase letter.'
+        elif not re.search(r'[a-z]', password):
+            error = 'Password must contain at least one lowercase letter.'
+        elif not re.search(r'\d', password):
+            error = 'Password must contain at least one digit.'
+        elif not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            error = 'Password must contain at least one special character.'
         elif password != confirm_password:
             error = 'Passwords do not match.'
         elif not favourite_team:
@@ -387,6 +391,7 @@ def register():
         elif db_conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone() is not None:
             error = f'User {username} is already registered.'
 
+        # Register user if no errors
         if error is None:
             db_conn.execute(
                 'INSERT INTO users (username, password, favourite_team) VALUES (?, ?, ?)',
