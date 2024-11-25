@@ -247,76 +247,86 @@ def handle_prediction():
             def safe_sum(df, column):
                 return df[column].sum() if not df.empty and column in df.columns else 0
 
-            # Relevante Statistiken berechnen
+            # Berechnung spezifischer Statistiken
+            goals_scored_home = (0.9 * safe_sum(home_stats, 'HomeTeamGoals') + 0.1 * safe_sum(home_stats_past, 'HomeTeamGoals'))
+            goals_scored_away = (0.9 * safe_sum(away_stats, 'AwayTeamGoals') + 0.1 * safe_sum(away_stats_past, 'AwayTeamGoals'))
+            goals_conceded_home = (0.9 * safe_sum(home_stats, 'AwayTeamGoals') + 0.1 * safe_sum(home_stats_past, 'AwayTeamGoals'))
+            goals_conceded_away = (0.9 * safe_sum(away_stats, 'HomeTeamGoals') + 0.1 * safe_sum(away_stats_past, 'HomeTeamGoals'))
+
+            # Gesamte Tore und Gegentore
+            total_goals_scored = goals_scored_home + goals_scored_away
+            total_goals_conceded = goals_conceded_home + goals_conceded_away
+
+            # Berechnung weiterer Statistiken
+            shots = (0.9 * safe_sum(home_stats, 'HomeTeamShots') + 0.1 * safe_sum(home_stats_past, 'HomeTeamShots')) + \
+                    (0.9 * safe_sum(away_stats, 'AwayTeamShots') + 0.1 * safe_sum(away_stats_past, 'AwayTeamShots'))
+            corners = (0.9 * safe_sum(home_stats, 'HomeTeamCorners') + 0.1 * safe_sum(home_stats_past, 'HomeTeamCorners')) + \
+                    (0.9 * safe_sum(away_stats, 'AwayTeamCorners') + 0.1 * safe_sum(away_stats_past, 'AwayTeamCorners'))
+
+            # Zusammenführen der Statistiken
             stats = {
-                'goals_scored': (0.9 * safe_sum(home_stats, 'HomeTeamGoals') + 0.2 * safe_sum(home_stats_past, 'HomeTeamGoals')) +
-                                (0.9 * safe_sum(away_stats, 'AwayTeamGoals') + 0.2 * safe_sum(away_stats_past, 'AwayTeamGoals')),
-                'goals_conceded': (0.9 * safe_sum(home_stats, 'AwayTeamGoals') + 0.2 * safe_sum(home_stats_past, 'AwayTeamGoals')) +
-                                (0.9 * safe_sum(away_stats, 'HomeTeamGoals') + 0.2 * safe_sum(away_stats_past, 'HomeTeamGoals')),
-                'shots': (0.9 * safe_sum(home_stats, 'HomeTeamShots') + 0.2 * safe_sum(home_stats_past, 'HomeTeamShots')) +
-                        (0.9 * safe_sum(away_stats, 'AwayTeamShots') + 0.2 * safe_sum(away_stats_past, 'AwayTeamShots')),
-                'corners': (0.9 * safe_sum(home_stats, 'HomeTeamCorners') + 0.2 * safe_sum(home_stats_past, 'HomeTeamCorners')) +
-                        (0.9 * safe_sum(away_stats, 'AwayTeamCorners') + 0.2 * safe_sum(away_stats_past, 'AwayTeamCorners'))
+                'goals_scored': total_goals_scored,
+                'goals_conceded': total_goals_conceded,
+                'goals_scored_home': goals_scored_home,
+                'goals_scored_away': goals_scored_away,
+                'goals_conceded_home': goals_conceded_home,
+                'goals_conceded_away': goals_conceded_away,
+                'shots': shots,
+                'corners': corners
             }
 
             return stats
 
 
-
         def calculate_win_probability(home_team, away_team):
             """
-            Berechnet die Siegwahrscheinlichkeit basierend auf gewichteten Statistiken.
-            Berücksichtigt Tore geschossen/kassiert zu Hause und auswärts, sowie Gesamtvorteile.
-            Die Wahrscheinlichkeit wird normiert: Negative Werte zwischen 0-50%, positive Werte zwischen 50-100%.
+            Berechnet die Wahrscheinlichkeiten für Heimsieg, Unentschieden und Auswärtssieg.
+            Die Werte summieren sich zu 100% und berücksichtigen gewichtete Tore.
             """
-            # Berechne Teamstatistiken mit korrekter Übergabe des Gegners
+            # Statistiken abrufen
             home_stats = calculate_team_statistics(home_team, opponent_team=away_team, as_home=True, as_away=False)
             away_stats = calculate_team_statistics(away_team, opponent_team=home_team, as_home=False, as_away=True)
 
-            # Durchschnittliche Tore Heimteam (Heim) und Auswärtsteam (Auswärts)
-            home_avg_scored = home_stats['goals_scored']
-            home_avg_conceded = home_stats['goals_conceded']
-            away_avg_scored = away_stats['goals_scored']
-            away_avg_conceded = away_stats['goals_conceded']
+            # Gewichtete Tore berechnen
+            home_strength = (home_stats['goals_scored'] * 0.4) + (home_stats['goals_scored_home'] * 0.6)
+            away_strength = (away_stats['goals_scored'] * 0.4) + (away_stats['goals_scored_away'] * 0.6)
 
-            # Gesamtstatistiken
-            home_advantage = (home_avg_scored - away_avg_conceded)  # Heimteam Vorteil basierend auf Heimtoren
-            away_advantage = (away_avg_scored - home_avg_conceded)  # Auswärtsteam Vorteil basierend auf Auswärtstoren
+            # Basiswahrscheinlichkeiten
+            base_home = 40  # Heimsieg Basis
+            base_away = 30  # Auswärtssieg Basis
+            base_draw = 30  # Unentschieden Basis
 
-            # Gesamtvorteil unter Berücksichtigung beider Metriken
-            total_advantage = home_advantage + away_advantage
+            # Unentschieden-Wahrscheinlichkeit anpassen
+            strength_diff = abs(home_strength - away_strength)
+            draw_adjustment = max(0, 10 - 2 * strength_diff)  # Je ähnlicher, desto höher die Draw-Chance
+            draw_probability = base_draw + draw_adjustment
 
-            print(f"{home_team} (Heim): Tore geschossen: {home_avg_scored}, Tore kassiert: {home_avg_conceded}")
-            print(f"{away_team} (Auswärts): Tore geschossen: {away_avg_scored}, Tore kassiert: {away_avg_conceded}")
-            print(f"Vorteil Heimteam: {home_advantage}, Vorteil Auswärtsteam: {away_advantage}")
-            print(f"Gesamter Vorteil: {total_advantage}")
-
-            if total_advantage == 0:
-                # Wenn der Gesamtvorteil 0 ist, nehmen wir 50% für beide
-                return 50, 50
-
-            # Berechne die Wahrscheinlichkeiten
-            if total_advantage > 0:
-                home_probability = 50 + (total_advantage / abs(total_advantage)) * (total_advantage / 2)
-                away_probability = 100 - home_probability
+            # Verbleibende Wahrscheinlichkeit aufteilen
+            remaining_probability = 100 - draw_probability
+            total_strength = home_strength + away_strength
+            if total_strength > 0:
+                home_probability = base_home + (remaining_probability * (home_strength / total_strength))
+                away_probability = base_away + (remaining_probability * (away_strength / total_strength))
             else:
-                away_probability = 50 + (total_advantage / abs(total_advantage)) * (abs(total_advantage) / 2)
-                home_probability = 100 - away_probability
+                # Wenn keine Stärke vorhanden ist, bleibt es bei Gleichverteilung
+                home_probability = away_probability = remaining_probability / 2
 
-            # Sicherstellen, dass die Wahrscheinlichkeiten im Bereich [0, 100] liegen
-            home_probability = max(0, min(100, home_probability))
-            away_probability = max(0, min(100, away_probability))
+            # Normieren, um numerische Fehler zu verhindern
+            total_probability = home_probability + draw_probability + away_probability
+            home_probability = (home_probability / total_probability) * 100
+            draw_probability = (draw_probability / total_probability) * 100
+            away_probability = (away_probability / total_probability) * 100
 
-            print(f"Wahrscheinlichkeiten: {home_probability:.2f}% für {home_team} und {away_probability:.2f}% für {away_team}")
+            print(f"Wahrscheinlichkeiten: Heimsieg {home_probability:.2f}%, Unentschieden {draw_probability:.2f}%, Auswärtssieg {away_probability:.2f}%")
 
-            return round(home_probability, 2), round(away_probability, 2)
+            return round(home_probability, 2), round(draw_probability, 2), round(away_probability, 2)
 
 
         # Berechnung der Wahrscheinlichkeiten für jedes Spiel
         probabilities = []
         for _, game in selected_games.iterrows():
-            home_prob, away_prob = calculate_win_probability(game['HomeTeam'], game['AwayTeam'])
-            probabilities.append((home_prob, away_prob))
+            home_prob, draw_prob, away_prob = calculate_win_probability(game['HomeTeam'], game['AwayTeam'])
+            probabilities.append((home_prob, draw_prob, away_prob))
 
         # Ergebnis-Dictionary
         games_list = {
@@ -325,11 +335,13 @@ def handle_prediction():
             'home_teams': selected_games['HomeTeam'].tolist(),
             'away_teams': selected_games['AwayTeam'].tolist(),
             'home_probabilities': [p[0] for p in probabilities],
-            'away_probabilities': [p[1] for p in probabilities]
+            'draw_probabilities': [p[1] for p in probabilities],
+            'away_probabilities': [p[2] for p in probabilities]
         }
 
-    # Die Ergebnisse an die HTML-Vorlage zurückgeben
-    return render_template('selectedprediction.html', gameday=selected_gameday, games_list=games_list)
+        # Die Ergebnisse an die HTML-Vorlage zurückgeben
+        return render_template('selectedprediction.html', gameday=selected_gameday, games_list=games_list)
+
 
 
 
