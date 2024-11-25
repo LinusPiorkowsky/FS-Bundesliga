@@ -5,6 +5,7 @@ from flask import Flask, render_template, redirect, url_for, request, flash, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 import db
 from functools import wraps
+from rapidfuzz import process
 
 app = Flask(__name__)
 app.config['DATABASE'] = os.path.join(app.instance_path, 'users.db')
@@ -121,7 +122,7 @@ def view_results():
 @login_required
 def prediction():
     # zukünftige Spieltage laden und in Dropdown Menü laden
-    games_df = pd.read_csv('Datasets/gameplan_24_25.csv')
+    games_df = pd.read_csv('Datasets/gameplan_24_25.csv', sep=',', encoding='utf-8')
     games_df['Date'] = pd.to_datetime(games_df['Date'], dayfirst=True)
     futuregames = games_df[games_df['Date'] > pd.to_datetime('today')]
 
@@ -134,6 +135,135 @@ def prediction():
 
     # Rückgabe an die Vorlage
     return render_template('prediction.html', gamedays=gamedays)
+
+@app.route('/handle_prediction', methods=['POST'])
+def handle_prediction():
+    # Abrufen der Daten aus der Anfrage
+    selected_gameday = request.form.get('gameday')
+
+    # Spiele für den ausgewählten Gameday filtern
+    games_df = pd.read_csv('Datasets/gameplan_24_25.csv', sep=',', encoding='utf-8')
+    games_df['Date'] = pd.to_datetime(games_df['Date'], dayfirst=True)
+    futuregames = games_df[games_df['Date'] > pd.to_datetime('today')]
+    selected_games = futuregames[futuregames['Gameday'] == int(selected_gameday)]
+
+
+
+    if selected_games.empty:
+        games_list = "No games found for this Gameday."
+    else:
+        # Wahrscheinlichkeiten berechnen
+        updated_games = pd.read_csv('Datasets/Updated_Games.csv', delimiter=';')
+        updated_games['Date'] = pd.to_datetime(updated_games['Date'], dayfirst=True)
+        
+        print(updated_games['AwayTeamGoals'])
+
+        # Die aktuelle Saison identifizieren
+        current_season = updated_games['Season'].max()
+
+        # Aktuelle Saison und ältere Spiele trennen
+        current_season_data = updated_games[updated_games['Season'] == current_season]
+
+
+
+
+        past_season_data = updated_games[updated_games['Season'] != current_season]
+
+        def calculate_team_statistics(team_name, as_home=True, as_away=True):
+            """
+            Berechnet die gewichteten Statistiken für ein Team basierend auf Heim- und Auswärtsspielen.
+            """
+            if as_home:
+                home_stats = current_season_data[current_season_data['HomeTeam'] == team_name]
+                home_stats_past = past_season_data[past_season_data['HomeTeam'] == team_name]
+            else:
+                home_stats = home_stats_past = pd.DataFrame()
+
+            if as_away:
+                away_stats = current_season_data[current_season_data['AwayTeam'] == team_name]
+                away_stats_past = past_season_data[past_season_data['AwayTeam'] == team_name]
+            else:
+                away_stats = away_stats_past = pd.DataFrame()
+
+            # Funktion zur sicheren Summenberechnung
+            def safe_sum(df, column):
+                return df[column].sum() if not df.empty and column in df.columns else 0
+
+            # Relevante Statistiken berechnen
+            stats = {
+                'goals_scored': (0.9 * safe_sum(home_stats, 'HomeTeamGoals') + 0.2 * safe_sum(home_stats_past, 'HomeTeamGoals')) +
+                                (0.9 * safe_sum(away_stats, 'AwayTeamGoals') + 0.2 * safe_sum(away_stats_past, 'AwayTeamGoals')),
+                'goals_conceded': (0.9 * safe_sum(home_stats, 'AwayTeamGoals') + 0.2 * safe_sum(home_stats_past, 'AwayTeamGoals')) +
+                                (0.9 * safe_sum(away_stats, 'HomeTeamGoals') + 0.2 * safe_sum(away_stats_past, 'HomeTeamGoals')),
+                'shots': (0.9 * safe_sum(home_stats, 'HomeTeamShots') + 0.2 * safe_sum(home_stats_past, 'HomeTeamShots')) +
+                        (0.9 * safe_sum(away_stats, 'AwayTeamShots') + 0.2 * safe_sum(away_stats_past, 'AwayTeamShots')),
+                'corners': (0.9 * safe_sum(home_stats, 'HomeTeamCorners') + 0.2 * safe_sum(home_stats_past, 'HomeTeamCorners')) +
+                        (0.9 * safe_sum(away_stats, 'AwayTeamCorners') + 0.2 * safe_sum(away_stats_past, 'AwayTeamCorners'))
+            }
+
+            return stats
+
+
+        def calculate_win_probability(home_team, away_team):
+            """
+            Berechnet die Siegwahrscheinlichkeit basierend auf den gewichteten Statistiken.
+            Die Wahrscheinlichkeit wird so normiert, dass negative Werte zwischen 0-50% 
+            und positive Werte zwischen 50-100% liegen.
+            """
+            # Berechne Teamstatistiken für beide Teams
+            home_stats = calculate_team_statistics(home_team, as_home=True, as_away=False)
+            away_stats = calculate_team_statistics(away_team, as_home=False, as_away=True)
+
+            # Berechne den Heimvorteil (Tore erzielt - Tore zugelassen des Auswärtsteams)
+            home_advantage = home_stats['goals_scored'] - away_stats['goals_conceded']
+            # Berechne den Auswärtsvorteil (Tore erzielt - Tore zugelassen des Heimteams)
+            away_advantage = away_stats['goals_scored'] - home_stats['goals_conceded']
+
+            # Gesamtvorteil beider Teams
+            total_advantage = home_advantage + away_advantage
+
+            if total_advantage == 0:
+                # Wenn der Gesamtvorteil 0 ist, nehmen wir 50% für beide
+                return 50, 50
+
+            # Wenn der Vorteil positiv ist (Heimteam favorisiert)
+            if total_advantage > 0:
+                home_probability = 50 + (total_advantage / abs(total_advantage)) * (total_advantage / 2)
+                away_probability = 100 - home_probability
+            # Wenn der Vorteil negativ ist (Auswärtsteam favorisiert)
+            else:
+                away_probability = 50 + (total_advantage / abs(total_advantage)) * (abs(total_advantage) / 2)
+                home_probability = 100 - away_probability
+
+            # Sicherstellen, dass die Wahrscheinlichkeiten nicht außerhalb des Bereichs liegen
+            home_probability = max(0, min(100, home_probability))
+            away_probability = max(0, min(100, away_probability))
+
+            return round(home_probability, 2), round(away_probability, 2)
+
+
+
+
+        # Berechnung der Wahrscheinlichkeiten für jedes Spiel
+        probabilities = []
+        for _, game in selected_games.iterrows():
+            home_prob, away_prob = calculate_win_probability(game['HomeTeam'], game['AwayTeam'])
+            probabilities.append((home_prob, away_prob))
+
+        # Ergebnis-Dictionary
+        games_list = {
+            'dates': selected_games['Date'].dt.strftime('%Y-%m-%d').tolist(),
+            'times': selected_games['Time'].tolist(),
+            'home_teams': selected_games['HomeTeam'].tolist(),
+            'away_teams': selected_games['AwayTeam'].tolist(),
+            'home_probabilities': [p[0] for p in probabilities],
+            'away_probabilities': [p[1] for p in probabilities]
+        }
+
+    # Die Ergebnisse an die HTML-Vorlage zurückgeben
+    return render_template('selectedprediction.html', gameday=selected_gameday, games_list=games_list)
+
+
 
     
 # Funktion für Bundesliga Team (18) für auswahl bei registrierung
