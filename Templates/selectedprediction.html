@@ -8,32 +8,35 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-            background-color: #f9f9f9;
+            background-color: #f4f4f9;
+            color: #333;
         }
         h1 {
-            color: #333;
+            text-align: center;
+            color: #444;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            background-color: #fff;
+            margin: 20px 0;
+            background: #fff;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         th, td {
-            border: 1px solid #ddd;
             padding: 10px;
             text-align: center;
+            border: 1px solid #ddd;
         }
         th {
-            background-color: #f2f2f2;
+            background: #007bff;
+            color: white;
             font-weight: bold;
         }
         tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background: #f9f9f9;
         }
         tr:hover {
-            background-color: #f1f1f1;
+            background: #f1f1f1;
         }
         .probability {
             font-weight: bold;
@@ -47,13 +50,16 @@
         .low-probability {
             color: #dc3545;
         }
+        .draw-probability {
+            color: #6c757d;
+        }
     </style>
 </head>
 <body>
-    <h1>Games for Gameday {{ gameday }}</h1>
+    <h1>Prediction Results for Gameday {{ gameday }}</h1>
     
     {% if games_list == "No games found for this Gameday." %}
-        <p>{{ games_list }}</p>
+        <p style="text-align: center;">{{ games_list }}</p>
     {% else %}
         <table>
             <thead>
@@ -63,6 +69,7 @@
                     <th>Home Team</th>
                     <th>Away Team</th>
                     <th>Home Team Probability</th>
+                    <th>Draw Probability</th>
                     <th>Away Team Probability</th>
                 </tr>
             </thead>
@@ -73,10 +80,13 @@
                         <td>{{ games_list['times'][i] }}</td>
                         <td>{{ games_list['home_teams'][i] }}</td>
                         <td>{{ games_list['away_teams'][i] }}</td>
-                        <td class="probability {% if games_list['home_probabilities'][i] >= 60 %}high-probability{% elif games_list['home_probabilities'][i] >= 40 %}medium-probability{% else %}low-probability{% endif %}">
+                        <td class="probability {% if games_list['home_probabilities'][i] >= 50 %}high-probability{% elif games_list['home_probabilities'][i] >= 40 %}medium-probability{% else %}low-probability{% endif %}">
                             {{ games_list['home_probabilities'][i] }}%
                         </td>
-                        <td class="probability {% if games_list['away_probabilities'][i] >= 60 %}high-probability{% elif games_list['away_probabilities'][i] >= 40 %}medium-probability{% else %}low-probability{% endif %}">
+                        <td class="probability draw-probability">
+                            {{ games_list['draw_probabilities'][i] }}%
+                        </td>
+                        <td class="probability {% if games_list['away_probabilities'][i] >= 50 %}high-probability{% elif games_list['away_probabilities'][i] >= 40 %}medium-probability{% else %}low-probability{% endif %}">
                             {{ games_list['away_probabilities'][i] }}%
                         </td>
                     </tr>
