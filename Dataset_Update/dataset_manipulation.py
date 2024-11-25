@@ -81,7 +81,7 @@ def harmonize_team_names():
     # Funktion zur Suche nach dem besten Match
     def find_best_match(team_name, choices):
         match, score, _ = process.extractOne(team_name, choices)
-        return match if score > 80 else team_name  # Setze einen Ähnlichkeitsschwellenwert (hier: 80)
+        return match if score > 60 else team_name  # Setze einen Ähnlichkeitsschwellenwert (hier: 80)
     
     # Harmonisiere Home- und Away-Teamnamen in updated_games
     updated_games['HomeTeam'] = updated_games['HomeTeam'].apply(lambda x: find_best_match(x, official_teams))
