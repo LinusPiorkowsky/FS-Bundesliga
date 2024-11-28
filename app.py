@@ -343,21 +343,18 @@ def handle_prediction():
         # Die Ergebnisse an die HTML-Vorlage zurückgeben
         return render_template('selectedprediction.html', gameday=selected_gameday, games_list=games_list)
 
-
-# Funktion für Bundesliga Team (18) für auswahl bei registrierung
-def load_bundesliga_teams_from_json(json_path):
-    try:
-        with open(json_path, "r", encoding="utf-8") as json_file:
-            data = json.load(json_file)
-        return sorted(data.get("BundesligaTeams", []))
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        raise ValueError("Error loading Bundesliga teams from JSON: " + str(e))
-
 @app.route('/register', methods=('GET', 'POST'))
 def register():
     # Load Bundesliga teams from JSON file
     json_path = "Static/Data/teams.json"
-    unique_teams = load_bundesliga_teams_from_json(json_path)
+    try:
+        with open(json_path, 'r') as file:
+            unique_teams = json.load(file)
+    except FileNotFoundError:
+        unique_teams = {"BundesligaTeams": []}
+
+    # Extract team names from JSON
+    team_names = [team['name'] for team in unique_teams.get('BundesligaTeams', [])]
 
     if request.method == 'POST':
         username = request.form['username']
@@ -402,7 +399,8 @@ def register():
             return redirect(url_for('login')) 
 
         flash(error)
-    return render_template('register.html', teams=unique_teams)
+    return render_template('register.html', teams=team_names)
+
 
 
 # Login-Route
@@ -436,21 +434,19 @@ def logout():
     return redirect(url_for('login'))  # Weiterleitung zur Login-Seite
 
 ### Berechnungen für Lieblingsteam
-df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
-df.sort_values(by='Date', ascending=False, inplace=True)
-
+# Function to calculate insights for a specific team
 def get_team_insights(team_name):
-    # Filter für das Team
+    # Filter matches for the team
     team_matches = df[(df['HomeTeam'] == team_name) | (df['AwayTeam'] == team_name)]
     
-    # Perfomace 5 letzte spiele
+    # Performance for the last 5 games
     last_5_games = team_matches.head(5)
     performance_last_5 = last_5_games.apply(
         lambda row: 'W' if (row['HomeTeam'] == team_name and row['HomeTeamGoals'] > row['AwayTeamGoals']) or 
                                 (row['AwayTeam'] == team_name and row['AwayTeamGoals'] > row['HomeTeamGoals']) else 
                     'D' if row['HomeTeamGoals'] == row['AwayTeamGoals'] else 'L', axis=1)
     
-    # Berechnungen für 10 letzte Spiele
+    # Calculations for the last 10 games
     last_10_games = team_matches.head(10)
     total_shots_on_target = round(last_10_games.apply(
         lambda row: row['HomeTeamShotsOnTarget'] if row['HomeTeam'] == team_name else row['AwayTeamShotsOnTarget'], axis=1).mean(), 2)
@@ -462,13 +458,15 @@ def get_team_insights(team_name):
         lambda row: row['AwayTeamGoals'] if row['HomeTeam'] == team_name else row['HomeTeamGoals'], axis=1).mean(), 2)
     
     efficiency = round(last_10_games.apply(
-        lambda row: (row['HomeTeamGoals'] / row['HomeTeamShotsOnTarget']) if row['HomeTeam'] == team_name else
-                    (row['AwayTeamGoals'] / row['AwayTeamShotsOnTarget']), axis=1).mean(skipna=True), 2)
+        lambda row: (row['HomeTeamGoals'] / row['HomeTeamShotsOnTarget']) if row['HomeTeam'] == team_name and row['HomeTeamShotsOnTarget'] > 0 else
+                    (row['AwayTeamGoals'] / row['AwayTeamShotsOnTarget']) if row['AwayTeam'] == team_name and row['AwayTeamShotsOnTarget'] > 0 else 0,
+        axis=1).mean(), 2)
+    
     clean_sheets = last_10_games.apply(
         lambda row: 1 if (row['HomeTeam'] == team_name and row['AwayTeamGoals'] == 0) or 
                           (row['AwayTeam'] == team_name and row['HomeTeamGoals'] == 0) else 0, axis=1).sum()
     
-    # Höchster Sieg
+    # Highest win in the 2024 season
     season_2024 = df[df['Season'] == 2024]
     season_2024_team = season_2024[(season_2024['HomeTeam'] == team_name) | (season_2024['AwayTeam'] == team_name)]
     season_2024_team['GoalsScored'] = season_2024_team.apply(
@@ -499,20 +497,23 @@ def get_team_insights(team_name):
         "Overall Rating": rating
     }
 
-
-#Berechnung für Liga Durschnitte
+# Function to calculate league averages
 def get_league_averages():
-    # Filter für 10 letzten spiele
+    # Filter for the last 10 games for all teams
     last_10_games = df.tail(10 * len(df['HomeTeam'].unique()))
 
-    # Berechnungen
+    # Calculations
     avg_shots_on_target = round(last_10_games[['HomeTeamShotsOnTarget', 'AwayTeamShotsOnTarget']].mean().mean(), 2)
     avg_goals_scored = round(last_10_games[['HomeTeamGoals', 'AwayTeamGoals']].mean().mean(), 2)
-    avg_goals_conceded = avg_goals_scored  # Since goals scored by one team are goals conceded by another
-    efficiency = round(last_10_games.apply(
-        lambda row: (row['HomeTeamGoals'] / row['HomeTeamShotsOnTarget']) if row['HomeTeamShotsOnTarget'] > 0 else 0, axis=1).mean() + \
-                 last_10_games.apply(
-        lambda row: (row['AwayTeamGoals'] / row['AwayTeamShotsOnTarget']) if row['AwayTeamShotsOnTarget'] > 0 else 0, axis=1).mean(), 2)
+    avg_goals_conceded = avg_goals_scored  # Goals scored by one team are goals conceded by another
+    efficiency = round(
+        last_10_games.apply(
+            lambda row: (row['HomeTeamGoals'] / row['HomeTeamShotsOnTarget']) if row['HomeTeamShotsOnTarget'] > 0 else 0, axis=1
+        ).mean() + 
+        last_10_games.apply(
+            lambda row: (row['AwayTeamGoals'] / row['AwayTeamShotsOnTarget']) if row['AwayTeamShotsOnTarget'] > 0 else 0, axis=1
+        ).mean(), 2
+    )
     clean_sheets = last_10_games.apply(
         lambda row: (1 if row['AwayTeamGoals'] == 0 else 0) + (1 if row['HomeTeamGoals'] == 0 else 0), axis=1).sum()
 
@@ -535,6 +536,7 @@ def get_league_averages():
         "Highest Win of 2024": f"{highest_win_score} ({highest_win_teams})"
     }
 
+
 # Route für favoriten Team
 @app.route('/team_insights', methods=['GET'])
 @login_required
@@ -546,11 +548,30 @@ def team_insights():
     user = db_conn.execute('SELECT favourite_team FROM users WHERE id = ?', (user_id,)).fetchone()
     favourite_team = user['favourite_team']
     
+    # Load team data from JSON
+    json_path = "Static/Data/teams.json"
+    try:
+        with open(json_path, 'r') as file:
+            teams_data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        teams_data = {"BundesligaTeams": []}
+        print(f"Error loading JSON: {e}")
+
+    # Find data for the favorite team
+    team_data = next((team for team in teams_data.get('BundesligaTeams', []) if team['name'] == favourite_team), None)
+
     # Calculate insights for the favorite team
     insights = get_team_insights(favourite_team)
     league_averages = get_league_averages()
     
-    return render_template('team_insights.html', favourite_team=favourite_team, insights=insights, league_averages=league_averages)
+    return render_template(
+        'team_insights.html',
+        favourite_team=favourite_team,
+        insights=insights,
+        team_data=team_data,
+        league_averages=league_averages
+    )
+
 
 @app.route('/account-settings', methods=['GET', 'POST'])
 @login_required
@@ -651,7 +672,16 @@ def change_password():
 def change_favourite_team():
     # Load Bundesliga teams from JSON file
     json_path = "Static/Data/teams.json"
-    unique_teams = load_bundesliga_teams_from_json(json_path)
+    try:
+        with open(json_path, 'r') as file:
+            unique_teams = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        # Handle missing or invalid JSON file
+        unique_teams = {"BundesligaTeams": []}
+        print(f"Error loading JSON: {e}")
+
+    # Extract team names from JSON
+    team_names = [team['name'] for team in unique_teams.get('BundesligaTeams', []) if isinstance(team, dict) and 'name' in team]
 
     if request.method == 'POST':
         favourite_team = request.form.get('favourite_team')
@@ -662,7 +692,7 @@ def change_favourite_team():
         # Validate input
         if not favourite_team:
             error = 'Favourite team is required.'
-        elif favourite_team not in unique_teams:
+        elif favourite_team not in team_names:
             error = 'Invalid team selection.'
 
         # Update favourite team if no errors
@@ -677,7 +707,8 @@ def change_favourite_team():
 
         flash(error, 'error')
 
-    return render_template('change_favourite_team.html', teams=unique_teams)
+    return render_template('change_favourite_team.html', teams=team_names)
+
 
 
 if __name__ == '__main__':

@@ -369,3 +369,41 @@ table thead tr {
 .legend .loss::before {
     background-color: red;
 }
+/* Team Information Section Styling */
+.team-info {
+    margin-top: 20px;
+    background-color: #f4f4f9; /* Light gray background for contrast */
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for emphasis */
+    text-align: left; /* Align text to the left for readability */
+}
+
+.team-info h2 {
+    color: #0055cc; /* Consistent blue for section titles */
+    margin-bottom: 15px;
+    font-size: 1.5rem; /* Slightly larger font size */
+}
+
+.team-info ul {
+    list-style: none; /* Remove default bullet points */
+    padding: 0; /* Remove padding */
+    margin: 0; /* Remove margin */
+}
+
+.team-info ul li {
+    margin-bottom: 10px; /* Add space between items */
+    font-size: 1rem; /* Standard font size */
+    color: #333; /* Neutral text color */
+}
+
+.team-info ul li strong {
+    color: #0055cc; /* Highlight the label with blue */
+}
+
+.team-info p {
+    color: #cc0000; /* Red for fallback message */
+    font-size: 1rem;
+    margin-top: 10px;
+    font-weight: bold;
+}

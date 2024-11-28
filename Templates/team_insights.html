@@ -28,6 +28,21 @@
             <button type="button">Back to Menu</button>
         </a>
 
+        <!-- Team Information -->
+        <div class="team-info">
+            <h2>Team Information</h2>
+            {% if team_data %}
+            <ul>
+                <li><strong>Trainer:</strong> {{ team_data['coach'] }}</li>
+                <li><strong>Bundesliga Titles:</strong> {{ team_data['bundesliga_titles'] }}</li>
+                <li><strong>DFB Pokal Titles:</strong> {{ team_data['dfb_pokal_titles'] }}</li>
+                <li><strong>Champions League Titles:</strong> {{ team_data['champions_league_titles'] }}</li>
+            </ul>
+            {% else %}
+            <p>No additional information available for this team.</p>
+            {% endif %}
+        </div>
+
         <!-- Insights Comparison Table -->
         <div class="results">
             <h2>Performance Metrics Comparison</h2>
@@ -43,14 +58,14 @@
                     <tr>
                         <td>Performance</td>
                         <td>
-                             {% for result in insights['Performance (Last 5 Games)'] %}
+                            {% for result in insights['Performance (Last 5 Games)'] %}
                             <span class="{% if result == 'W' %}win{% elif result == 'D' %}draw{% elif result == 'L' %}loss{% endif %}">
-                            {{ result }}
+                                {{ result }}
                             </span>
-                             {% endfor %}
-                            </td>
+                            {% endfor %}
+                        </td>
+                        <td>N/A</td>
                     </tr>
-
                     <tr>
                         <td>Average Shots on Target</td>
                         <td class="{{ 'better' if insights['Average Shots on Target (Last 10 Games)'] > league_averages['League Average Shots on Target'] else 'worse' }}">
@@ -94,30 +109,29 @@
                     <tr>
                         <td>Overall Rating</td>
                         <td class="{% if insights['Overall Rating'] > 50 %}better{% else %}worse{% endif %}">
-                             {{ insights['Overall Rating'] }}
+                            {{ insights['Overall Rating'] }}
                         </td>
-                        <td></td>
+                        <td>N/A</td>
                     </tr>
-
                 </tbody>
             </table>
         </div>
-            <!-- Legend Section -->
-    <div class="legend">
-        <h3>Legend</h3>
-        <ul>
-            <li><span class="win">W</span>: Win</li>
-            <li><span class="draw">D</span>: Draw</li>
-            <li><span class="loss">L</span>: Loss</li>
-            <li><strong>Average Shots on Target: </strong> Average number of shots on target (10 matches)</li>
-            <li><strong>Average Goals Scored: </strong> Average number of goals scored (10 matches)</li>
-            <li><strong>Efficiency:</strong> Goals scored per shot on target (10 matches)</li>
-            <li><strong>Average Goals Conceded:</strong> Average number of goals conceded per match (10 matches)</li>
-            <li><strong>Clean Sheets:</strong> Matches without conceding a goal (10 matches)</li>
-            <li><strong>Highest Win:</strong> Biggest winning margin in 2024.</li>
-            <li><strong>Overall Rating:</strong> Calculated: (Avarage Shots on Target * 3 + Efficiency * 40 + Clean Sheets * 5)</li>
-        </ul>
-    </div>
+        <!-- Legend Section -->
+        <div class="legend">
+            <h3>Legend</h3>
+            <ul>
+                <li><span class="win">W</span>: Win</li>
+                <li><span class="draw">D</span>: Draw</li>
+                <li><span class="loss">L</span>: Loss</li>
+                <li><strong>Average Shots on Target:</strong> Average number of shots on target (10 matches)</li>
+                <li><strong>Average Goals Scored:</strong> Average number of goals scored (10 matches)</li>
+                <li><strong>Efficiency:</strong> Goals scored per shot on target (10 matches)</li>
+                <li><strong>Average Goals Conceded:</strong> Average number of goals conceded per match (10 matches)</li>
+                <li><strong>Clean Sheets:</strong> Matches without conceding a goal (10 matches)</li>
+                <li><strong>Highest Win:</strong> Biggest winning margin in 2024</li>
+                <li><strong>Overall Rating:</strong> Calculated: (Average Shots on Target * 3 + Efficiency * 40 + Clean Sheets * 5)</li>
+            </ul>
+        </div>
     </div>
 </body>
 </html>
