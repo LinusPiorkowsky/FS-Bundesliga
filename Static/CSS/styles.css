@@ -317,3 +317,55 @@ table thead tr {
     margin-bottom: 15px;
     font-size: 0.9rem;
 }
+.win {
+    color: green;
+    font-weight: bold;
+}
+
+.draw {
+    color: gray;
+    font-weight: bold;
+}
+
+.loss {
+    color: red;
+    font-weight: bold;
+}
+.legend {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.legend ul {
+    list-style: none;
+    padding: 0;
+}
+
+.legend li {
+    font-size: 0.9rem;
+    margin: 5px 0;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.legend li::before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border-radius: 50%;
+}
+
+.legend .win::before {
+    background-color: green;
+}
+
+.legend .draw::before {
+    background-color: gray;
+}
+
+.legend .loss::before {
+    background-color: red;
+}

@@ -439,7 +439,6 @@ def logout():
 df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
 df.sort_values(by='Date', ascending=False, inplace=True)
 
-# Funktion für berechnung
 def get_team_insights(team_name):
     # Filter für das Team
     team_matches = df[(df['HomeTeam'] == team_name) | (df['AwayTeam'] == team_name)]
@@ -447,24 +446,24 @@ def get_team_insights(team_name):
     # Perfomace 5 letzte spiele
     last_5_games = team_matches.head(5)
     performance_last_5 = last_5_games.apply(
-        lambda row: 'Win' if (row['HomeTeam'] == team_name and row['HomeTeamGoals'] > row['AwayTeamGoals']) or 
+        lambda row: 'W' if (row['HomeTeam'] == team_name and row['HomeTeamGoals'] > row['AwayTeamGoals']) or 
                                 (row['AwayTeam'] == team_name and row['AwayTeamGoals'] > row['HomeTeamGoals']) else 
-                    'Draw' if row['HomeTeamGoals'] == row['AwayTeamGoals'] else 'Loss', axis=1)
+                    'D' if row['HomeTeamGoals'] == row['AwayTeamGoals'] else 'L', axis=1)
     
     # Berechnungen für 10 letzte Spiele
     last_10_games = team_matches.head(10)
-    total_shots_on_target = last_10_games.apply(
-        lambda row: row['HomeTeamShotsOnTarget'] if row['HomeTeam'] == team_name else row['AwayTeamShotsOnTarget'], axis=1).mean()
+    total_shots_on_target = round(last_10_games.apply(
+        lambda row: row['HomeTeamShotsOnTarget'] if row['HomeTeam'] == team_name else row['AwayTeamShotsOnTarget'], axis=1).mean(), 2)
     
-    avg_goals_scored = last_10_games.apply(
-        lambda row: row['HomeTeamGoals'] if row['HomeTeam'] == team_name else row['AwayTeamGoals'], axis=1).mean()
+    avg_goals_scored = round(last_10_games.apply(
+        lambda row: row['HomeTeamGoals'] if row['HomeTeam'] == team_name else row['AwayTeamGoals'], axis=1).mean(), 2)
     
-    avg_goals_conceded = last_10_games.apply(
-        lambda row: row['AwayTeamGoals'] if row['HomeTeam'] == team_name else row['HomeTeamGoals'], axis=1).mean()
+    avg_goals_conceded = round(last_10_games.apply(
+        lambda row: row['AwayTeamGoals'] if row['HomeTeam'] == team_name else row['HomeTeamGoals'], axis=1).mean(), 2)
     
-    efficiency = last_10_games.apply(
+    efficiency = round(last_10_games.apply(
         lambda row: (row['HomeTeamGoals'] / row['HomeTeamShotsOnTarget']) if row['HomeTeam'] == team_name else
-                    (row['AwayTeamGoals'] / row['AwayTeamShotsOnTarget']), axis=1).mean(skipna=True)
+                    (row['AwayTeamGoals'] / row['AwayTeamShotsOnTarget']), axis=1).mean(skipna=True), 2)
     clean_sheets = last_10_games.apply(
         lambda row: 1 if (row['HomeTeam'] == team_name and row['AwayTeamGoals'] == 0) or 
                           (row['AwayTeam'] == team_name and row['HomeTeamGoals'] == 0) else 0, axis=1).sum()
@@ -485,8 +484,8 @@ def get_team_insights(team_name):
     )
     highest_win_detail = f"{highest_win_score} vs {highest_win_opponent}"
     
-    # Overall rating tbd!!!
-    rating = (total_shots_on_target * 0.3 + efficiency * 50 + clean_sheets * 5) / 10 * 100
+    # Overall rating
+    rating = round((total_shots_on_target * 4 + avg_goals_scored * 7 + clean_sheets * 5), 2)
     rating = min(max(int(rating), 1), 100)
     
     return {
@@ -498,6 +497,42 @@ def get_team_insights(team_name):
         "Clean Sheets (Last 10 Games)": clean_sheets,
         "Highest Win of 2024": highest_win_detail,
         "Overall Rating": rating
+    }
+
+
+#Berechnung für Liga Durschnitte
+def get_league_averages():
+    # Filter für 10 letzten spiele
+    last_10_games = df.tail(10 * len(df['HomeTeam'].unique()))
+
+    # Berechnungen
+    avg_shots_on_target = round(last_10_games[['HomeTeamShotsOnTarget', 'AwayTeamShotsOnTarget']].mean().mean(), 2)
+    avg_goals_scored = round(last_10_games[['HomeTeamGoals', 'AwayTeamGoals']].mean().mean(), 2)
+    avg_goals_conceded = avg_goals_scored  # Since goals scored by one team are goals conceded by another
+    efficiency = round(last_10_games.apply(
+        lambda row: (row['HomeTeamGoals'] / row['HomeTeamShotsOnTarget']) if row['HomeTeamShotsOnTarget'] > 0 else 0, axis=1).mean() + \
+                 last_10_games.apply(
+        lambda row: (row['AwayTeamGoals'] / row['AwayTeamShotsOnTarget']) if row['AwayTeamShotsOnTarget'] > 0 else 0, axis=1).mean(), 2)
+    clean_sheets = last_10_games.apply(
+        lambda row: (1 if row['AwayTeamGoals'] == 0 else 0) + (1 if row['HomeTeamGoals'] == 0 else 0), axis=1).sum()
+
+    total_matches = len(last_10_games)
+    avg_clean_sheets_per_game = round(clean_sheets / total_matches, 2)
+
+    # Highest win league-wide in the 2024 season
+    season_2024 = df[df['Season'] == 2024]
+    season_2024['GoalDifference'] = abs(season_2024['HomeTeamGoals'] - season_2024['AwayTeamGoals'])
+    highest_win_row = season_2024.loc[season_2024['GoalDifference'].idxmax()]
+    highest_win_score = f"{max(highest_win_row['HomeTeamGoals'], highest_win_row['AwayTeamGoals'])}:{min(highest_win_row['HomeTeamGoals'], highest_win_row['AwayTeamGoals'])}"
+    highest_win_teams = f"{highest_win_row['HomeTeam']} vs {highest_win_row['AwayTeam']}"
+
+    return {
+        "League Average Shots on Target": avg_shots_on_target,
+        "League Average Goals Scored": avg_goals_scored,
+        "League Efficiency (Goals per Shot)": round(efficiency / 2, 2),  # Divide by 2 since we summed home and away efficiency
+        "League Average Goals Conceded": avg_goals_conceded,
+        "Average Clean Sheets Per Game": avg_clean_sheets_per_game,
+        "Highest Win of 2024": f"{highest_win_score} ({highest_win_teams})"
     }
 
 # Route für favoriten Team
@@ -513,8 +548,9 @@ def team_insights():
     
     # Calculate insights for the favorite team
     insights = get_team_insights(favourite_team)
+    league_averages = get_league_averages()
     
-    return render_template('team_insights.html', favourite_team=favourite_team, insights=insights)
+    return render_template('team_insights.html', favourite_team=favourite_team, insights=insights, league_averages=league_averages)
 
 @app.route('/account-settings', methods=['GET', 'POST'])
 @login_required
@@ -608,7 +644,6 @@ def change_password():
             return redirect(url_for('account_actions'))
 
     return render_template('change_password.html')
-
 
 
 @app.route('/change-favourite-team', methods=['GET', 'POST'])
