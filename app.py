@@ -516,6 +516,134 @@ def team_insights():
     
     return render_template('team_insights.html', favourite_team=favourite_team, insights=insights)
 
+@app.route('/account-settings', methods=['GET', 'POST'])
+@login_required
+def account_settings():
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        user_id = session.get('user_id')
+        db_conn = db.get_db()
+
+        # Fetch the user's hashed password from the database
+        user = db_conn.execute('SELECT password FROM users WHERE id = ?', (user_id,)).fetchone()
+
+        if not check_password_hash(user['password'], current_password):
+            flash('Incorrect password. Please try again.', 'error')
+            return render_template('verify_password.html')
+
+        # Password correct, redirect to account actions
+        session['verified'] = True
+        return redirect(url_for('account_actions'))
+
+    return render_template('verify_password.html')
+
+@app.route('/account-actions')
+@login_required
+def account_actions():
+    if not session.get('verified'):
+        return redirect(url_for('account_settings'))
+
+    return render_template('account_actions.html')
+
+@app.route('/change-username', methods=['GET', 'POST'])
+@login_required
+def change_username():
+    if not session.get('verified'):
+        return redirect(url_for('account_settings'))
+
+    if request.method == 'POST':
+        new_username = request.form.get('new_username')
+        user_id = session.get('user_id')
+        db_conn = db.get_db()
+
+        # Validate the new username
+        if not new_username:
+            flash('Username is required.', 'username_error')
+        elif len(new_username) < 3:
+            flash('Username must be at least 3 characters long.', 'username_error')
+        elif db_conn.execute('SELECT id FROM users WHERE username = ?', (new_username,)).fetchone() is not None:
+            flash(f'User {new_username} is already registered.', 'username_error')
+        else:
+            # Update username in the database
+            db_conn.execute('UPDATE users SET username = ? WHERE id = ?', (new_username, user_id))
+            db_conn.commit()
+            flash('Username updated successfully!', 'username_success')
+            return redirect(url_for('account_actions'))
+
+    return render_template('change_username.html')
+
+@app.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if not session.get('verified'):
+        return redirect(url_for('account_settings'))
+
+    if request.method == 'POST':
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        user_id = session.get('user_id')
+        db_conn = db.get_db()
+
+        # Validate the new password
+        if not new_password:
+            flash('Password is required.', 'password_error')
+        elif len(new_password) < 6:
+            flash('Password must be at least 6 characters long.', 'password_error')
+        elif not re.search(r'[A-Z]', new_password):
+            flash('Password must contain at least one uppercase letter.', 'password_error')
+        elif not re.search(r'[a-z]', new_password):
+            flash('Password must contain at least one lowercase letter.', 'password_error')
+        elif not re.search(r'\d', new_password):
+            flash('Password must contain at least one digit.', 'password_error')
+        elif not re.search(r'[!@#$%^&*(),.?":{}|<>]', new_password):
+            flash('Password must contain at least one special character.', 'password_error')
+        elif new_password != confirm_password:
+            flash('Passwords do not match.', 'password_error')
+        else:
+            # Update the password in the database
+            hashed_password = generate_password_hash(new_password)
+            db_conn.execute('UPDATE users SET password = ? WHERE id = ?', (hashed_password, user_id))
+            db_conn.commit()
+            flash('Password updated successfully!', 'password_success')
+            return redirect(url_for('account_actions'))
+
+    return render_template('change_password.html')
+
+
+
+@app.route('/change-favourite-team', methods=['GET', 'POST'])
+@login_required
+def change_favourite_team():
+    # Load Bundesliga teams from JSON file
+    json_path = "Static/Data/teams.json"
+    unique_teams = load_bundesliga_teams_from_json(json_path)
+
+    if request.method == 'POST':
+        favourite_team = request.form.get('favourite_team')
+        user_id = session.get('user_id')
+        db_conn = db.get_db()
+        error = None
+
+        # Validate input
+        if not favourite_team:
+            error = 'Favourite team is required.'
+        elif favourite_team not in unique_teams:
+            error = 'Invalid team selection.'
+
+        # Update favourite team if no errors
+        if error is None:
+            db_conn.execute(
+                'UPDATE users SET favourite_team = ? WHERE id = ?',
+                (favourite_team, user_id)
+            )
+            db_conn.commit()
+            flash('Favourite team updated successfully!', 'success')
+            return redirect(url_for('account_actions'))
+
+        flash(error, 'error')
+
+    return render_template('change_favourite_team.html', teams=unique_teams)
+
 
 if __name__ == '__main__':
     open_port = find_open_port()  # Einen freien Port finden
