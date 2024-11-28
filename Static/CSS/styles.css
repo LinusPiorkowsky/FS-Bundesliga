@@ -245,3 +245,75 @@ table thead tr {
     background-color: #0055cc; /* Keep consistent header styling */
     color: #fff;
 }
+/* Account Settings Styling */
+.account-settings-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.account-settings-container h2 {
+    color: #0055cc; /* Consistent blue for titles */
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+}
+
+.account-settings-container form label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.account-settings-container form input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.account-settings-container form button {
+    background-color: #0055cc; /* Blue for submit button */
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.account-settings-container form button:hover {
+    background-color: #0044aa; /* Slightly darker blue on hover */
+}
+
+.account-settings-container .cancel-button {
+    background-color: #D3101C; /* Consistent red for cancel button */
+    margin-left: 10px;
+}
+
+.account-settings-container .cancel-button:hover {
+    background-color: #e65c5c; /* Slightly darker red on hover */
+}
+.error-message {
+    color: #cc0000;
+    background-color: #ffe6e6;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+.success-message {
+    color: #0055cc;
+    background-color: #e6f2ff;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
