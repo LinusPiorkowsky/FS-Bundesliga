@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+       <header>
+            <h1>Bundesliga Predictor</h1>
+            <img src="{{ url_for('static', filename='Images/bundesliga-logo.png') }}" alt="Bundesliga Logo" class="logo">
+            <h2>Account Settings</h2> 
+        </header>
+
+        <!-- Back to Menu Button -->
+        <a href="{{ url_for('index') }}">
+            <button type="button">Back to Menu</button>
+        </a>
+
+<div class="form-container">
+    <h2>Change Username</h2>
+    <form method="post">
+    {% with messages = get_flashed_messages(category_filter=['username_error']) %}
+        {% for message in messages %}
+            <div class="error-message">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    {% with messages = get_flashed_messages(category_filter=['username_success']) %}
+        {% for message in messages %}
+            <div class="success-message">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+        <div class="form-group">
+            <label for="new_username">New Username</label>
+            <input type="text" name="new_username" id="new_username" required>
+            <small>Username must be at least 3 characters long.</small>
+        </div>
+        <button type="submit">Save Changes</button>
+        <button type="button" onclick="window.location.href='{{ url_for('account_actions') }}'">Cancel</button>
+    </form>
+</div>
+
+</body>
+</html>

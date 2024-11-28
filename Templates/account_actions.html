@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+       <header>
+            <h1>Bundesliga Predictor</h1>
+            <img src="{{ url_for('static', filename='Images/bundesliga-logo.png') }}" alt="Bundesliga Logo" class="logo">
+            <h2>Account Settings</h2> 
+        </header>
+        <!-- Back to Menu Button -->
+        <a href="{{ url_for('index') }}">
+            <button type="button">Back to Menu</button>
+        </a>
+<div class="buttons">
+    <form action="{{ url_for('change_username') }}" method="GET">
+        <button type="submit">Change Username</button>
+    </form>
+    <form action="{{ url_for('change_password') }}" method="GET">
+        <button type="submit">Change Password</button>
+    </form>
+    <form action="{{ url_for('change_favourite_team') }}" method="GET">
+        <button type="submit">Change Favourite Team</button>
+    </form>
+</div>
+</body>
+</html>

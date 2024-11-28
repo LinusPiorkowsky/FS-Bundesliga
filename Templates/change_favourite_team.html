@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+       <header>
+            <h1>Bundesliga Predictor</h1>
+            <img src="{{ url_for('static', filename='Images/bundesliga-logo.png') }}" alt="Bundesliga Logo" class="logo">
+            <h2>Account Settings</h2> 
+        </header>
+
+        <!-- Back to Menu Button -->
+        <a href="{{ url_for('index') }}">
+            <button type="button">Back to Menu</button>
+        </a>
+
+<div class="form-container">
+    <h2>Change Favourite Team</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="favourite_team">Favourite Team</label>
+            <select name="favourite_team" id="favourite_team" required>
+                <option value="">Select your team</option>
+                {% for team in teams %}
+                <option value="{{ team }}">{{ team }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit">Save Changes</button>
+        <button type="button" onclick="window.location.href='{{ url_for('account_actions') }}'">Cancel</button>
+    </form>
+</div>
+</body>
+</html>
