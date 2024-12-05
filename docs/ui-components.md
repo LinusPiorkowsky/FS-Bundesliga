@@ -1,6 +1,6 @@
 ---
 title: UI Components
-nav_exlude: true
+nav_exclude: true
 ---
 
 {: .label .label-red }
@@ -8,7 +8,7 @@ UI Documentation
 
 # UI Components
 
-This documentation provides an overview of the UI components used in this projekt.
+This documentation provides an overview of the UI components used in this project.
 
 ## UI Screens and Features
 
@@ -25,9 +25,9 @@ This component provides the user interface for user authentication. It includes:
 ### Register
 The registration component allows new users to create an account. It includes:
 - Username input field
-- Password input fiel
+- Password input field
 - Confirm password input field
-- Choose favourite team markdown
+- Choose favorite team dropdown
 - Registration button
 
 ![Register Screen](docs/assets/images/Register.png)
@@ -36,7 +36,7 @@ The registration component allows new users to create an account. It includes:
 
 ### Home Screen
 The home screen serves as the main dashboard after login. It includes:
-- Navigation bar
+- Navigation bar:
     - Results
     - Prediction
     - Favorite Team
@@ -47,11 +47,12 @@ The home screen serves as the main dashboard after login. It includes:
 
 ![Home Screen](docs/assets/images/welcome.png)
 ![Home Screen 2](docs/assets/images/welcome2.png)
+
 ---
 
 ### Results
 The results screen displays historic data from 2016:
-- Bundeliga gamedays
+- Bundesliga gamedays
 - Bundesliga tables
 
 ![Results Screen](docs/assets/images/results.png)
@@ -60,11 +61,11 @@ The results screen displays historic data from 2016:
 ---
 
 ### Prediction
-The prediction component handles forecasting prediction on historic data. It includes:
+The prediction component handles forecasting on historic data. It includes:
 - Input field for the gameday
-- Prediction results display 
-    - Green color as high probability
-    - Red color as low probability
+- Prediction results display:
+    - Green color for high probability
+    - Red color for low probability
 
 ![Prediction Screen](docs/assets/images/Prediction.png)
 ![Prediction Screen 2](docs/assets/images/Prediction2.png)
@@ -72,11 +73,11 @@ The prediction component handles forecasting prediction on historic data. It inc
 ---
 
 ### Favorite Team
-This component allows users get insights on their favourite team. It includes:
-- Team information
+This component provides insights about the user's favorite team. It includes:
+- Team information:
     - Trainer
     - Trophies 
-- Perfomance data
+- Performance data
 
 ![Favorite Team Screen](docs/assets/images/team.png)
 ![Favorite Team Screen 2](docs/assets/images/team2.png)
@@ -85,11 +86,9 @@ This component allows users get insights on their favourite team. It includes:
 
 ### User Settings
 The user settings component provides configuration options for the user. It includes:
-- Profile management
+- Profile management:
     - Username
     - Password
-    - Favourite Team
+    - Favorite Team
 
 ![User Settings Screen](assets/images/user_settings_screen.png)
-
-
