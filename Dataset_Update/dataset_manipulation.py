@@ -3,11 +3,24 @@ import requests
 import pandas as pd
 from datetime import datetime
 from rapidfuzz import process
+import subprocess
+import schedule
+import time
 
-# Funktion: Herunterladen der Bundesliga-Daten
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_UPDATE_DIR = BASE_DIR  
+DATASETS_DIR = os.path.join(os.path.dirname(BASE_DIR), 'Datasets')
+
+def verify_directories():
+    if not os.path.exists(DATASET_UPDATE_DIR):
+        raise FileNotFoundError(f"Directory {DATASET_UPDATE_DIR} does not exist.")
+    if not os.path.exists(DATASETS_DIR):
+        raise FileNotFoundError(f"Directory {DATASETS_DIR} does not exist.")
+
+# Herunterladen der Bundesliga-Daten
 def download_csv():
     url = "https://www.football-data.co.uk/mmz4281/2425/D1.csv"  # Aktuelle Saison
-    local_path = "Dataset_Update/D1.csv"  # Speicherort für die CSV
+    local_path = os.path.join(DATASET_UPDATE_DIR, 'D1.csv')
     
     response = requests.get(url)
     if response.status_code == 200:
@@ -18,15 +31,15 @@ def download_csv():
         print(f"Fehler beim Herunterladen der Datei: {response.status_code}")
         raise Exception("Download fehlgeschlagen!")
 
-# Funktion: Modifizieren und Anhängen der Daten
+# Modifizieren und Anhängen der Daten
 def update_dataset():
-    file_path = "Dataset_Update/D1.csv"
-    modified_file_path = "Datasets/Updated_Games.csv"
+    file_path = os.path.join(DATASET_UPDATE_DIR, 'D1.csv')
+    modified_file_path = os.path.join(DATASETS_DIR, 'Updated_Games.csv')
 
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Datei {file_path} nicht gefunden. Bitte sicherstellen, dass der Download erfolgreich war.")
     
-    # Neue CSV laden (Semikolon als Trennzeichen sicherstellen)
+    # Neue CSV laden 
     df_new = pd.read_csv(file_path, sep=',')
 
     # Umbenennen und zusätzliche Spalten hinzufügen
@@ -41,11 +54,11 @@ def update_dataset():
     df_new_modified.insert(1, 'Season', '2024')  # Saison dynamisch anpassen
     df_new_modified.insert(2, 'Gameday', (df_new_modified.index // 9) + 1)
 
-    # Bestehende Daten laden, wenn verfügbar
+    # Bestehende Daten laden
     if os.path.exists(modified_file_path):
         df_existing = pd.read_csv(modified_file_path, delimiter=';')
         
-        # Kombinieren der Daten
+        # Kombinieren 
         combined_df = pd.concat([df_existing, df_new_modified], ignore_index=True)
         
         # Doppelte Einträge entfernen
@@ -62,15 +75,10 @@ def update_dataset():
     combined_df.to_csv(modified_file_path, sep=';', index=False)
     print(f"Datei wurde erfolgreich aktualisiert: {modified_file_path}")
 
-"Mapping der Teamnamen aus der D1.csv und der führenden gameplan_24_25.csv"
+# Mapping
 def harmonize_team_names():
-
-    """
-    Harmonisiert Teamnamen in updated_games basierend auf den offiziellen Namen aus gameplan_24_25.
-
-    """
-    updated_games_path = 'Datasets/Updated_Games.csv'
-    gameplan_path = 'Datasets/gameplan_24_25.csv'
+    updated_games_path = os.path.join(DATASETS_DIR, 'Updated_Games.csv')
+    gameplan_path = os.path.join(DATASETS_DIR, 'gameplan_24_25.csv')
 
     updated_games = pd.read_csv(updated_games_path, sep=';', encoding='utf-8')
     gameplan = pd.read_csv(gameplan_path, sep=',', encoding='utf-8')
@@ -81,7 +89,7 @@ def harmonize_team_names():
     # Funktion zur Suche nach dem besten Match
     def find_best_match(team_name, choices):
         match, score, _ = process.extractOne(team_name, choices)
-        return match if score > 60 else team_name  # Setze einen Ähnlichkeitsschwellenwert (hier: 80)
+        return match if score > 60 else team_name  # Setze einen Ähnlichkeitsschwellenwert
     
     # Harmonisiere Home- und Away-Teamnamen in updated_games
     updated_games['HomeTeam'] = updated_games['HomeTeam'].apply(lambda x: find_best_match(x, official_teams))
@@ -91,25 +99,47 @@ def harmonize_team_names():
     updated_games.to_csv(updated_games_path, sep=';', index=False)
     print(f"Harmonisierte Daten gespeichert unter: {updated_games_path}")
 
+def git_commit_and_push():
+    try:
+        repo_path = "/Users/linus/FS-Bundesliga"
+        os.chdir(repo_path)
+        
+        # Checken ob Git repo
+        if not os.path.exists(os.path.join(repo_path, '.git')):
+            print("Not a Git repository. Skipping commit.")
+            return
+        
+        # Auto Commit
+        subprocess.run(['git', 'add', 'Datasets/Updated_Games.csv'], check=True)
+        
+        # Commit 
+        commit_message = f"Update Bundesliga data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        subprocess.run(['git', 'commit', '-m', commit_message], check=True)
+        
+        # Push to main
+        subprocess.run(['git', 'push'], check=True)
+        
+        print("Successfully committed and pushed to GitHub!")
+    except subprocess.CalledProcessError as e:
+        print(f"Git operation error: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+
 # Funktion: Workflow für Montag
 def monday_update():
+    verify_directories()  # Verify directories exist
     print(f"Starte Update: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     download_csv()
     update_dataset()
     harmonize_team_names()
+    git_commit_and_push()  # Git-Synchronisation
     print("Update abgeschlossen.")
 
-# Zeitgesteuertes Ausführen mit `schedule`
 if __name__ == "__main__":
-    import schedule
-    import time
+    # monday_update() # um manuell auszuführen
 
-    # Montags um 06:00 Uhr ausführen
     schedule.every().monday.at("10:31").do(monday_update)
-    
-    print("Scheduler läuft. Warte auf Montag 06:00 Uhr...")
+    print("Scheduler läuft. Warte auf Montag 10:31 Uhr...")
     while True:
         schedule.run_pending()
         time.sleep(1)
-
-
