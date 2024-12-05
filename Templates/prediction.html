@@ -3,24 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prediction</title>
-    <style>
-        #gameday {
-            width: 250px;
-            padding: 10px;
-            font-size: 16px;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-    </style>
+    <title>Bundesliga Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/styles.css') }}">
 </head>
 <body>
-    <h1>Prediction</h1>
+    <div class="container">
+        <header>
+            <h1>Bundesliga Predictor</h1>
+            <img src="{{ url_for('static', filename='Images/bundesliga-logo.png') }}" alt="Bundesliga Logo" class="logo">
+            <p>Prediction</p>
+        </header>
+
+                <!-- Back to Menu Button -->
+        <a href="{{ url_for('index') }}">
+            <button type="button">Back to Menu</button>
+        </a>
+        
     <form action="/handle_prediction" method="post">
         <label for="gameday">Select a Gameday:</label>
         <select id="gameday" name="gameday">

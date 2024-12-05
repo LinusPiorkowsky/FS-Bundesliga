@@ -407,3 +407,23 @@ table thead tr {
     margin-top: 10px;
     font-weight: bold;
 }
+/* Probability Colors */
+.high-probability {
+    color: #28a745; /* Green for high probability */
+    font-weight: bold;
+}
+
+.medium-probability {
+    color: #ffc107; /* Yellow for medium probability */
+    font-weight: bold;
+}
+
+.low-probability {
+    color: #dc3545; /* Red for low probability */
+    font-weight: bold;
+}
+
+.draw-probability {
+    color: #6c757d; /* Gray for draw probability */
+    font-weight: bold;
+}

@@ -3,96 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prediction Results</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f9;
-            color: #333;
-        }
-        h1 {
-            text-align: center;
-            color: #444;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        th, td {
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #ddd;
-        }
-        th {
-            background: #007bff;
-            color: white;
-            font-weight: bold;
-        }
-        tr:nth-child(even) {
-            background: #f9f9f9;
-        }
-        tr:hover {
-            background: #f1f1f1;
-        }
-        .probability {
-            font-weight: bold;
-        }
-        .high-probability {
-            color: #28a745;
-        }
-        .medium-probability {
-            color: #ffc107;
-        }
-        .low-probability {
-            color: #dc3545;
-        }
-        .draw-probability {
-            color: #6c757d;
-        }
-    </style>
+    <title>Bundesliga Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/styles.css') }}">
 </head>
 <body>
-    <h1>Prediction Results for Gameday {{ gameday }}</h1>
-    
-    {% if games_list == "No games found for this Gameday." %}
-        <p style="text-align: center;">{{ games_list }}</p>
-    {% else %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Home Team</th>
-                    <th>Away Team</th>
-                    <th>Home Team Probability</th>
-                    <th>Draw Probability</th>
-                    <th>Away Team Probability</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for i in range(games_list['dates']|length) %}
+    <div class="container">
+        <!-- Header Section -->
+        <header>
+            <h1>Bundesliga Predictor</h1>
+            <img src="{{ url_for('static', filename='Images/bundesliga-logo.png') }}" alt="Bundesliga Logo" class="logo">
+            <p>Prediction Results for Gameday {{ gameday }}</p>
+        </header>
+
+        <!-- Back to Menu Button -->
+        <a href="{{ url_for('index') }}">
+            <button type="button">Back to Menu</button>
+        </a>
+
+        <!-- Prediction Results Section -->
+        {% if games_list == "No games found for this Gameday." %}
+            <p class="error-message">{{ games_list }}</p>
+        {% else %}
+            <table>
+                <thead>
                     <tr>
-                        <td>{{ games_list['dates'][i] }}</td>
-                        <td>{{ games_list['times'][i] }}</td>
-                        <td>{{ games_list['home_teams'][i] }}</td>
-                        <td>{{ games_list['away_teams'][i] }}</td>
-                        <td class="probability {% if games_list['home_probabilities'][i] >= 50 %}high-probability{% elif games_list['home_probabilities'][i] >= 40 %}medium-probability{% else %}low-probability{% endif %}">
-                            {{ games_list['home_probabilities'][i] }}%
-                        </td>
-                        <td class="probability draw-probability">
-                            {{ games_list['draw_probabilities'][i] }}%
-                        </td>
-                        <td class="probability {% if games_list['away_probabilities'][i] >= 50 %}high-probability{% elif games_list['away_probabilities'][i] >= 40 %}medium-probability{% else %}low-probability{% endif %}">
-                            {{ games_list['away_probabilities'][i] }}%
-                        </td>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Home Team</th>
+                        <th>Away Team</th>
+                        <th>Home Team Probability</th>
+                        <th>Draw Probability</th>
+                        <th>Away Team Probability</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% endif %}
+                </thead>
+                <tbody>
+                    {% for i in range(games_list['dates']|length) %}
+                        <tr>
+                            <td>{{ games_list['dates'][i] }}</td>
+                            <td>{{ games_list['times'][i] }}</td>
+                            <td>{{ games_list['home_teams'][i] }}</td>
+                            <td>{{ games_list['away_teams'][i] }}</td>
+                            <td class="probability {% if games_list['home_probabilities'][i] >= 50 %}high-probability{% elif games_list['home_probabilities'][i] >= 40 %}medium-probability{% else %}low-probability{% endif %}">
+                                {{ games_list['home_probabilities'][i] }}%
+                            </td>
+                            <td class="probability draw-probability">
+                                {{ games_list['draw_probabilities'][i] }}%
+                            </td>
+                            <td class="probability {% if games_list['away_probabilities'][i] >= 50 %}high-probability{% elif games_list['away_probabilities'][i] >= 40 %}medium-probability{% else %}low-probability{% endif %}">
+                                {{ games_list['away_probabilities'][i] }}%
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
 </body>
 </html>
