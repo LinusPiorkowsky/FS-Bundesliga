@@ -1,65 +1,95 @@
 ---
 title: UI Components
-nav_order: 99
+nav_exclude: true
 ---
 
 {: .label .label-red }
-[to be deleted]
+UI Documentation
 
-{: .attention}
-> Once you are familiar with the available UI components of this template, exclude this page by changing `nav_order: 99` to `nav_exclude: true` on top of this page (line 3). Its *front matter* will then look like this:
-> ```
-> ---
-> title: UI Components
-> nav_exclude: true
-> ---
-> ```
+# UI Components
 
-# UI components
+This documentation provides an overview of the UI components used in this projekt.
 
-The [Just the Docs documentation](https://just-the-docs.github.io/just-the-docs/docs/ui-components) details more UI components.
+## UI Screens and Features
 
-For a quick reference of the markdown syntax, visit [this page](https://github.com/just-the-docs/just-the-docs/blob/main/docs/index-test.md?plain=1).
+### Login
+This component provides the user interface for user authentication. It includes:
+- Username input field
+- Password input field
+- Login button
 
-## Images
+![Login Screen](docs/assets/images/Login.png)
 
-```markdown
-![get_list_todos_sample](assets/images/fswd-intro_02.png)
-```
+---
 
-![get_list_todos_sample](assets/images/fswd-intro_02.png)
+### Register
+The registration component allows new users to create an account. It includes:
+- Username input field
+- Password input fiel
+- Confirm password input field
+- Choose favourite team markdown
+- Registration button
 
-## Callouts
+![Register Screen](docs/assets/images/Register.png)
 
-{: .info }
-> This is an info callout.
+---
 
-{: .tip }
-> This is a tip callout.
+### Home Screen
+The home screen serves as the main dashboard after login. It includes:
+- Navigation bar
+    - Results
+    - Prediction
+    - Favorite Team
+    - User Settings
+    - Log Out
+- Latest gameday results
+- Current Bundesliga table
 
-{: .attention }
-> This is an attention callout.
+![Home Screen](docs/assets/images/welcome.png)
+![Home Screen 2](docs/assets/images/welcome2.png)
+---
 
-> {: .download }
-> This is a download callout.
+### Results
+The results screen displays historic data from 2016:
+- Bundeliga gamedays
+- Bundesliga tables
 
-## Labels
+![Results Screen](docs/assets/images/results.png)
+![Results Screen 2](docs/assets/images/results2.png)
 
-{: .label }
-[Default label]
+---
 
-{: .label .label-green }
-[Green label]
+### Prediction
+The prediction component handles forecasting prediction on historic data. It includes:
+- Input field for the gameday
+- Prediction results display 
+    - Green color as high probability
+    - Red color as low probability
 
-{: .label .label-red }
-[Red label]
+![Prediction Screen](docs/assets/images/Prediction.png)
+![Prediction Screen 2](docs/assets/images/Prediction2.png)
 
-## Mermaid.js
+---
 
-```mermaid
-graph TD;
-    A-->B;
-    A-->C;
-```
+### Favorite Team
+This component allows users get insights on their favourite team. It includes:
+- Team information
+    - Trainer
+    - Trophies 
+- Perfomance data
 
-Visit the [Mermaid docs](https://mermaid.js.org/intro/) for a thorough description of the charting possibilities.
+![Favorite Team Screen](docs/assets/images/team.png)
+![Favorite Team Screen 2](docs/assets/images/team2.png)
+
+---
+
+### User Settings
+The user settings component provides configuration options for the user. It includes:
+- Profile management
+    - Username
+    - Password
+    - Favourite Team
+
+![User Settings Screen](assets/images/user_settings_screen.png)
+
+
