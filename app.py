@@ -232,18 +232,21 @@ def handle_prediction():
             )
             common_seasons = team_seasons.intersection(opponent_seasons)
 
-            # Sonderfall: Keine gemeinsamen Vorsaisons
-            if not common_seasons:
-                return None
+            if len(common_seasons) > 0:  # Prüfen, ob es gemeinsame Saisons gibt
+                last_common_season = max(common_seasons)
+                last_common_season_data = past_season_data[past_season_data['Season'] == last_common_season].copy()
 
-            last_common_season = max(common_seasons)
-            last_common_season_data = past_season_data[past_season_data['Season'] == last_common_season]
+                home_stats_past = last_common_season_data[last_common_season_data['HomeTeam'] == home_team].copy()
+                away_stats_past = last_common_season_data[last_common_season_data['AwayTeam'] == away_team].copy()
+            else:
+                # Falls keine gemeinsamen Saisons existieren, leere DataFrames initialisieren
+                home_stats_past = pd.DataFrame()
+                away_stats_past = pd.DataFrame()
 
-            home_stats_current = current_season_data[current_season_data['HomeTeam'] == home_team]
-            away_stats_current = current_season_data[current_season_data['AwayTeam'] == away_team]
-            home_stats_past = last_common_season_data[last_common_season_data['HomeTeam'] == home_team]
-            away_stats_past = last_common_season_data[last_common_season_data['AwayTeam'] == away_team]
+            home_stats_current = current_season_data[current_season_data['HomeTeam'] == home_team].copy()
+            away_stats_current = current_season_data[current_season_data['AwayTeam'] == away_team].copy()
 
+            # Gewichtung der Statistiken basierend auf dem Spieltag
             if gameday == 1:
                 weight_past = 1.0
                 weight_current = 0.0
@@ -257,29 +260,52 @@ def handle_prediction():
             def safe_sum(df, column):
                 return df[column].sum() if not df.empty and column in df.columns else 0
 
+            # Tore berechnen
             goals_scored_home = (
                 weight_current * safe_sum(home_stats_current, 'HomeTeamGoals') +
-                weight_past * safe_sum(home_stats_past, 'HomeTeamGoals')
+                (weight_past * safe_sum(home_stats_past, 'HomeTeamGoals') if not home_stats_past.empty else 0)
             )
             goals_scored_away = (
                 weight_current * safe_sum(away_stats_current, 'AwayTeamGoals') +
-                weight_past * safe_sum(away_stats_past, 'AwayTeamGoals')
+                (weight_past * safe_sum(away_stats_past, 'AwayTeamGoals') if not away_stats_past.empty else 0)
             )
             goals_conceded_home = (
                 weight_current * safe_sum(home_stats_current, 'AwayTeamGoals') +
-                weight_past * safe_sum(home_stats_past, 'AwayTeamGoals')
+                (weight_past * safe_sum(home_stats_past, 'AwayTeamGoals') if not home_stats_past.empty else 0)
             )
             goals_conceded_away = (
                 weight_current * safe_sum(away_stats_current, 'HomeTeamGoals') +
-                weight_past * safe_sum(away_stats_past, 'HomeTeamGoals')
+                (weight_past * safe_sum(away_stats_past, 'HomeTeamGoals') if not away_stats_past.empty else 0)
             )
 
-            home_wins = weight_current * home_stats_current[home_stats_current['HomeTeamGoals'] > home_stats_current['AwayTeamGoals']].shape[0] + \
-                        weight_past * home_stats_past[home_stats_past['HomeTeamGoals'] > home_stats_past['AwayTeamGoals']].shape[0]
-            away_wins = weight_current * away_stats_current[away_stats_current['AwayTeamGoals'] > away_stats_current['HomeTeamGoals']].shape[0] + \
-                        weight_past * away_stats_past[away_stats_past['AwayTeamGoals'] > away_stats_past['HomeTeamGoals']].shape[0]
+            print(home_team, goals_scored_home)
+            print(away_team, goals_scored_away)
+
+            # Siege berechnen
+            home_wins = 0
+            if not home_stats_current.empty:
+                home_wins += weight_current * home_stats_current.loc[
+                    home_stats_current['HomeTeamGoals'] > home_stats_current['AwayTeamGoals']
+                ].shape[0]
+            if not home_stats_past.empty:
+                home_wins += weight_past * home_stats_past.loc[
+                    home_stats_past['HomeTeamGoals'] > home_stats_past['AwayTeamGoals']
+                ].shape[0]
+
+            away_wins = 0
+            if not away_stats_current.empty:
+                away_wins += weight_current * away_stats_current.loc[
+                    away_stats_current['AwayTeamGoals'] > away_stats_current['HomeTeamGoals']
+                ].shape[0]
+            if not away_stats_past.empty:
+                away_wins += weight_past * away_stats_past.loc[
+                    away_stats_past['AwayTeamGoals'] > away_stats_past['HomeTeamGoals']
+                ].shape[0]
 
             win_ratio = home_wins / (home_wins + away_wins) if (home_wins + away_wins) > 0 else 0.5
+
+            print(home_team, home_wins)
+            print(away_team, away_wins)
 
             stats = {
                 'home_strength': goals_scored_home,
@@ -291,10 +317,13 @@ def handle_prediction():
                 'win_ratio': win_ratio
             }
             return stats
-        def safe_sum(df, column):
-                return df[column].sum() if not df.empty and column in df.columns else 0
+
+
+
         def calculate_win_probability(home_team, away_team, gameday, updated_games):
-            # Berechne Wahrscheinlichkeiten nur für HomeWin, Draw, AwayWin
+            """
+            Berechne Wahrscheinlichkeiten für HomeWin, Draw und AwayWin.
+            """
             stats = calculate_team_statistics(home_team, away_team, gameday)
             if stats is None:
                 return 50, 25, 25  # Standardwerte, falls keine Stats gefunden werden
@@ -306,39 +335,52 @@ def handle_prediction():
             win_ratio = stats['win_ratio']
 
             # Berechne das Verhältnis der Teamstärken und Wahrscheinlichkeiten
-            strength_ratio = (home_strength + home_wins) / (away_strength + away_wins) if (away_strength + away_wins) != 0 else 1
+            strength_ratio = (0.3 * home_strength + 0.7 * home_wins) / (0.3* away_strength + 0.7 *away_wins) if (away_strength + away_wins) != 0 else 1
             combined_draw_factor = max(0, 1 - abs(1 - strength_ratio)) * (1 - abs(1 - win_ratio))
             draw_adjustment = combined_draw_factor * 20
             draw_probability = min(40, max(10, draw_adjustment + 25))
 
             remaining_probability = 100 - draw_probability
-            total_strength_wins = (home_strength + home_wins) + (away_strength + away_wins)
+            total_strength_wins = (0.3 * home_strength + 0.7 * home_wins) + (0.3 * away_strength + 0.7*away_wins)
 
             if total_strength_wins > 0:
-                home_probability = remaining_probability * ((home_strength + home_wins) / total_strength_wins)
-                away_probability = remaining_probability * ((away_strength + away_wins) / total_strength_wins)
+                home_probability = remaining_probability * ((0.3* home_strength + 0.7* home_wins) / total_strength_wins)
+                away_probability = remaining_probability * ((0.3* away_strength + 0.7*away_wins) / total_strength_wins)
             else:
                 home_probability = away_probability = remaining_probability / 2
 
             total_probability = home_probability + draw_probability + away_probability
             return round(home_probability / total_probability * 100, 2), \
-                   round(draw_probability / total_probability * 100, 2), \
-                   round(away_probability / total_probability * 100, 2)
+                round(draw_probability / total_probability * 100, 2), \
+                round(away_probability / total_probability * 100, 2)
 
         def calculate_average_goals(home_team, away_team, updated_games):
-            home_games = updated_games[(updated_games['HomeTeam'] == home_team) | (updated_games['AwayTeam'] == home_team)]
-            away_games = updated_games[(updated_games['HomeTeam'] == away_team) | (updated_games['AwayTeam'] == away_team)]
+            """
+            Berechnet die durchschnittlichen Tore pro Heimspiel für das Heimteam
+            und die durchschnittlichen Tore pro Auswärtsspiel für das Auswärtsteam.
+            """
+            # Filter für Heimspiele des Heimteams
+            home_games = updated_games[updated_games['HomeTeam'] == home_team]
+            # Filter für Auswärtsspiele des Auswärtsteams
+            away_games = updated_games[updated_games['AwayTeam'] == away_team]
 
-            home_goals = home_games['HomeTeamGoals'].sum() + home_games['AwayTeamGoals'].sum()
-            away_goals = away_games['HomeTeamGoals'].sum() + away_games['AwayTeamGoals'].sum()
+            # Berechnung der Tore
+            home_goals = home_games['HomeTeamGoals'].sum()  # Heimtore des Heimteams
+            away_goals = away_games['AwayTeamGoals'].sum()  # Auswärtstore des Auswärtsteams
 
-            total_games_home = len(home_games)
-            total_games_away = len(away_games)
+            # Berechnung der Anzahl der Spiele
+            total_home_games = len(home_games)  # Anzahl der Heimspiele des Heimteams
+            total_away_games = len(away_games)  # Anzahl der Auswärtsspiele des Auswärtsteams
 
-            home_avg_goals = home_goals / total_games_home if total_games_home > 0 else 0
-            away_avg_goals = away_goals / total_games_away if total_games_away > 0 else 0
-            total_avg_goals = (home_avg_goals + away_avg_goals) / 2
+            # Durchschnittliche Tore berechnen
+            home_avg_goals = home_goals / total_home_games if total_home_games > 0 else 0
+            away_avg_goals = away_goals / total_away_games if total_away_games > 0 else 0
+
+            # Total durchschnittliche Tore berechnen
+            total_avg_goals = home_avg_goals + away_avg_goals
+
             return home_avg_goals, away_avg_goals, total_avg_goals
+
 
 
 
@@ -351,15 +393,15 @@ def handle_prediction():
 
             # Über-1,5 Tore
             if total_avg_goals <= 1:
-                over_1_5_prob = 20  # Minimalwert
+                over_1_5_prob = 10  # Minimalwert
             elif total_avg_goals <= 2:
-                over_1_5_prob = 40
+                over_1_5_prob = 20
             elif total_avg_goals <= 3:
-                over_1_5_prob = 60
+                over_1_5_prob = 50
             elif total_avg_goals <= 4:
-                over_1_5_prob = 70
+                over_1_5_prob = 60
             elif total_avg_goals <= 5:
-                over_1_5_prob = 80
+                over_1_5_prob = 70
             else:
                 over_1_5_prob = 95  # Obergrenze
 
@@ -370,40 +412,60 @@ def handle_prediction():
 
 
 
-        probabilities = []
-        for _, game in selected_games.iterrows():
-            home_prob, draw_prob, away_prob = calculate_win_probability(
-                game['HomeTeam'], game['AwayTeam'], selected_gameday, updated_games)
-            
-            home_avg_goals, away_avg_goals, total_avg_goals = calculate_average_goals(
-                game['HomeTeam'], game['AwayTeam'], updated_games)
-            
-            over_1_5_prob, over_2_5_prob = calculate_over_goals_probability(home_avg_goals, away_avg_goals)
 
-            probabilities.append({
-                'game': f'{game["HomeTeam"]} vs {game["AwayTeam"]}',
-                'home_probability': home_prob,
-                'draw_probability': draw_prob,
-                'away_probability': away_prob,
-                'total_avg_goals': total_avg_goals,
-                'over_1_5_prob': over_1_5_prob,
-                'over_2_5_prob': over_2_5_prob
-            })
+    probabilities = []
+    for _, game in selected_games.iterrows():
+        home_prob, draw_prob, away_prob = calculate_win_probability(
+            game['HomeTeam'], game['AwayTeam'], selected_gameday, updated_games)
 
-        games_list = {
-            'dates': selected_games['Date'].dt.strftime('%Y-%m-%d').tolist(),
-            'times': selected_games['Time'].tolist(),
-            'home_teams': selected_games['HomeTeam'].tolist(),
-            'away_teams': selected_games['AwayTeam'].tolist(),
-            'home_probabilities': [p['home_probability'] for p in probabilities],
-            'draw_probabilities': [p['draw_probability'] for p in probabilities],
-            'away_probabilities': [p['away_probability'] for p in probabilities],
-            'total_avg_goals': [p['total_avg_goals'] for p in probabilities],
-            'over_1_5_prob': [p['over_1_5_prob'] for p in probabilities],
-            'over_2_5_prob': [p['over_2_5_prob'] for p in probabilities]
-        }
+        home_avg_goals, away_avg_goals, total_avg_goals = calculate_average_goals(
+            game['HomeTeam'], game['AwayTeam'], updated_games)
 
-    return render_template('selectedprediction.html', gameday=selected_gameday, games_list=games_list)
+        over_1_5_prob, over_2_5_prob = calculate_over_goals_probability(home_avg_goals, away_avg_goals)
+
+        probabilities.append({
+            'game': f'{game["HomeTeam"]} vs {game["AwayTeam"]}',
+            'home_probability': home_prob,
+            'draw_probability': draw_prob,
+            'away_probability': away_prob,
+            'total_avg_goals': total_avg_goals,
+            'over_1_5_prob': over_1_5_prob,
+            'over_2_5_prob': over_2_5_prob
+        })
+
+    games_list = {
+        'dates': selected_games['Date'].dt.strftime('%Y-%m-%d').tolist(),
+        'times': selected_games['Time'].tolist(),
+        'home_teams': selected_games['HomeTeam'].tolist(),
+        'away_teams': selected_games['AwayTeam'].tolist(),
+        'home_probabilities': [p['home_probability'] for p in probabilities],
+        'draw_probabilities': [p['draw_probability'] for p in probabilities],
+        'away_probabilities': [p['away_probability'] for p in probabilities],
+        'total_avg_goals': [p['total_avg_goals'] for p in probabilities],
+        'over_1_5_prob': [p['over_1_5_prob'] for p in probabilities],
+        'over_2_5_prob': [p['over_2_5_prob'] for p in probabilities]
+    }
+
+    # Zusatzübersichten erstellen
+    most_likely_teams = [
+        f"{game['game']} ({game['home_probability']}% Home Win)" if game['home_probability'] > 60 else
+        f"{game['game']} ({game['away_probability']}% Away Win)" if game['away_probability'] > 60 else None
+        for game in probabilities
+    ]
+    most_likely_teams = [team for team in most_likely_teams if team is not None]
+
+    high_goal_games = [
+        f"{game['game']} ({game['over_2_5_prob']}% over 2.5 goals)"
+        for game in probabilities if game['over_2_5_prob'] > 50
+    ]
+
+    return render_template(
+        'selectedprediction.html',
+        gameday=selected_gameday,
+        games_list=games_list,
+        most_likely_teams=most_likely_teams,
+        high_goal_games=high_goal_games
+    )
 
 
 @app.route('/register', methods=('GET', 'POST'))
