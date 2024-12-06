@@ -17,8 +17,8 @@
             text-align: center;
         }
         th {
-                background-color: #1e3a8a; /* Blau */
-                color: white; /* Weiße Schrift */
+            background-color: #1e3a8a;
+            color: white;
         }
         .probability {
             font-weight: bold;
@@ -35,29 +35,25 @@
         .draw-probability {
             color: blue;
         }
-        /* Add styles for the scrollable container */
         .table-container {
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling for mobile */
+            -webkit-overflow-scrolling: touch;
             margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header Section -->
         <header>
             <h1>Bundesliga Predictor</h1>
             <img src="{{ url_for('static', filename='Images/bundesliga-logo.png') }}" alt="Bundesliga Logo" class="logo">
             <p>Prediction Results for Gameday {{ gameday }}</p>
         </header>
 
-        <!-- Back to Menu Button -->
         <a href="{{ url_for('index') }}">
             <button type="button">Back to Menu</button>
         </a>
 
-        <!-- Prediction Results Section -->
         {% if games_list == "No games found for this Gameday." %}
             <p class="error-message">{{ games_list }}</p>
         {% else %}
@@ -94,16 +90,41 @@
                                     {{ games_list['away_probabilities'][i] }}%
                                 </td>
                                 <td>{{ games_list['total_avg_goals'][i]|round(2) }}</td>
-                                <td class="probability {% if games_list['over_1_5_prob'][i] >= 50 %}high-probability{% elif games_list['over_1_5_prob'][i] >= 40 %}medium-probability{% else %}low-probability{% endif %}">
+                                <td class="probability {% if games_list['over_1_5_prob'][i] >= 50 %}high-probability{% else %}low-probability{% endif %}">
                                     {{ games_list['over_1_5_prob'][i] }}%
                                 </td>
-                                <td class="probability {% if games_list['over_2_5_prob'][i] >= 50 %}high-probability{% elif games_list['over_2_5_prob'][i] >= 40 %}medium-probability{% else %}low-probability{% endif %}">
+                                <td class="probability {% if games_list['over_2_5_prob'][i] >= 50 %}high-probability{% else %}low-probability{% endif %}">
                                     {{ games_list['over_2_5_prob'][i] }}%
                                 </td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Additional Sections -->
+            <div>
+                <h2>Most likely Teams to win:</h2>
+                <ul>
+                    {% for i in range(games_list['home_probabilities']|length) %}
+                        {% if games_list['home_probabilities'][i] > 60 %}
+                            <li>{{ games_list['home_teams'][i] }} (vs {{ games_list['away_teams'][i] }}) - {{ games_list['home_probabilities'][i] }}%</li>
+                        {% elif games_list['away_probabilities'][i] > 60 %}
+                            <li>{{ games_list['away_teams'][i] }} (vs {{ games_list['home_teams'][i] }}) - {{ games_list['away_probabilities'][i] }}%</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div>
+                <h2>Games with highest probability of over 2.5 goals:</h2>
+                <ul>
+                    {% for i in range(games_list['over_2_5_prob']|length) %}
+                        {% if games_list['over_2_5_prob'][i] > 60 %}
+                            <li>{{ games_list['home_teams'][i] }} vs {{ games_list['away_teams'][i] }} - {{ games_list['over_2_5_prob'][i] }}%</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
             </div>
         {% endif %}
     </div>
