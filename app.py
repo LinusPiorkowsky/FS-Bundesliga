@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import socket
-from flask import Flask, render_template, redirect, url_for, request, flash, session
+from flask import Flask, jsonify, render_template, redirect, url_for, request, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 import db
 from functools import wraps
