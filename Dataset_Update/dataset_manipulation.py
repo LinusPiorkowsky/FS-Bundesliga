@@ -136,7 +136,7 @@ def monday_update():
     print("Update abgeschlossen.")
 
 if __name__ == "__main__":
-    # monday_update() # um manuell auszuführen
+    monday_update() # um manuell auszuführen
 
     schedule.every().monday.at("10:31").do(monday_update)
     print("Scheduler läuft. Warte auf Montag 10:31 Uhr...")
