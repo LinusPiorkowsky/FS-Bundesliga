@@ -4,8 +4,6 @@ import pandas as pd
 from datetime import datetime
 from rapidfuzz import process
 import subprocess
-import schedule
-import time
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_UPDATE_DIR = BASE_DIR  
@@ -30,6 +28,32 @@ def download_csv():
     else:
         print(f"Fehler beim Herunterladen der Datei: {response.status_code}")
         raise Exception("Download fehlgeschlagen!")
+
+# Überprüfen, ob neue Daten vorhanden sind
+def check_for_new_data():
+    file_path = os.path.join(DATASET_UPDATE_DIR, 'D1.csv')
+    modified_file_path = os.path.join(DATASETS_DIR, 'Updated_Games.csv')
+
+    # Neue CSV laden 
+    df_new = pd.read_csv(file_path, sep=',')
+
+    # Bestehende Daten laden
+    if os.path.exists(modified_file_path):
+        df_existing = pd.read_csv(modified_file_path, delimiter=';')
+
+        # Überprüfen, ob neue Zeilen existieren
+        existing_rows = len(df_existing)
+        new_rows = len(df_new)
+        
+        if new_rows > existing_rows:
+            print(f"Neue Daten erkannt. Bestehende Zeilen: {existing_rows}, Neue Zeilen: {new_rows}")
+            return True  # Neue Daten vorhanden
+        else:
+            print("Keine neuen Daten zum Aktualisieren gefunden.")
+            return False  # Keine neuen Daten
+    else:
+        print("Keine bestehenden Daten gefunden. Update erforderlich.")
+        return True  # Kein vorheriges Dataset vorhanden
 
 # Modifizieren und Anhängen der Daten
 def update_dataset():
@@ -125,21 +149,14 @@ def git_commit_and_push():
     except Exception as e:
         print(f"Unexpected error: {e}")
 
-# Funktion: Workflow für Montag
-def monday_update():
-    verify_directories()  # Verify directories exist
-    print(f"Starte Update: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    download_csv()
-    update_dataset()
-    harmonize_team_names()
-    git_commit_and_push()  # Git-Synchronisation
-    print("Update abgeschlossen.")
-
 if __name__ == "__main__":
-    monday_update() # um manuell auszuführen
+    verify_directories()
+    print("Starte Initialisierung...")
+    download_csv()
 
-    schedule.every().monday.at("10:31").do(monday_update)
-    print("Scheduler läuft. Warte auf Montag 10:31 Uhr...")
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    if check_for_new_data():
+        update_dataset()
+        harmonize_team_names()
+        git_commit_and_push()
+    else:
+        print("Keine neuen Daten. Beende das Skript.")
