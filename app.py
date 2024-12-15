@@ -475,16 +475,16 @@ def handle_prediction():
 
     # Zusatzübersichten erstellen
     most_likely_teams = [
-        f"{game['game']} ({game['home_probability']}% Home Win)" if game['home_probability'] > 60 else
-        f"{game['game']} ({game['away_probability']}% Away Win)" if game['away_probability'] > 60 else None
-        for game in probabilities
-    ]
-    most_likely_teams = [team for team in most_likely_teams if team is not None]
+    f"{game['game']} ({game['home_probability']}% Home Win)" if game['home_probability'] > 50 else
+    f"{game['game']} ({game['away_probability']}% Away Win)" if game['away_probability'] > 50 else None
+    for game in probabilities
+]
+    most_likely_teams = [team for team in most_likely_teams if team]
 
     high_goal_games = [
-        f"{game['game']} ({game['over_2_5_prob']}% over 2.5 goals)"
-        for game in probabilities if game['over_2_5_prob'] > 50
-    ]
+    f"{game['game']} ({game['over_2_5_prob']}% over 2.5 goals)"
+    for game in probabilities if game['over_2_5_prob'] > 40
+]
 
     return render_template(
         'selectedprediction.html',

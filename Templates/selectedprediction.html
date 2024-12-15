@@ -6,6 +6,14 @@
     <title>Bundesliga Predictor</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='CSS/styles.css') }}">
     <style>
+        .container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #ffffff; /* White for content sections */
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
         table {
             width: 100%;
             border-collapse: collapse;
@@ -103,24 +111,34 @@
             </div>
 
             <!-- Additional Sections -->
-            <div>
-                <h2>Most likely Teams to win:</h2>
-                <ul>
-                    {% for i in range(games_list['home_probabilities']|length) %}
-                        {% if games_list['home_probabilities'][i] > 60 %}
-                            <li>{{ games_list['home_teams'][i] }} (vs {{ games_list['away_teams'][i] }}) - {{ games_list['home_probabilities'][i] }}%</li>
-                        {% elif games_list['away_probabilities'][i] > 60 %}
-                            <li>{{ games_list['away_teams'][i] }} (vs {{ games_list['home_teams'][i] }}) - {{ games_list['away_probabilities'][i] }}%</li>
-                        {% endif %}
-                    {% endfor %}
-                </ul>
-            </div>
+            <div class="legend">
+            <h2>Most Likely Teams to Win:</h2>
+    <ul>
+        {% for i in range(games_list['home_probabilities']|length) %}
+            {% if games_list['home_probabilities'][i] >= 50 %}
+                <li>
+                    <span class="high-probability">{{ games_list['home_teams'][i] }}</span>
+                    (vs {{ games_list['away_teams'][i] }}) - 
+                    <span class="high-probability">{{ games_list['home_probabilities'][i] }}%</span>
+                </li>
+            {% elif games_list['away_probabilities'][i] >= 50 %}
+                <li>
+                    <span class="high-probability">{{ games_list['away_teams'][i] }}</span>
+                    (vs {{ games_list['home_teams'][i] }}) - 
+                    <span class="high-probability">{{ games_list['away_probabilities'][i] }}%</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>
 
-            <div>
+
+
+            <div class = legend>
                 <h2>Games with highest probability of over 2.5 goals:</h2>
                 <ul>
                     {% for i in range(games_list['over_2_5_prob']|length) %}
-                        {% if games_list['over_2_5_prob'][i] > 60 %}
+                        {% if games_list['over_2_5_prob'][i] >= 50 %}
                             <li>{{ games_list['home_teams'][i] }} vs {{ games_list['away_teams'][i] }} - {{ games_list['over_2_5_prob'][i] }}%</li>
                         {% endif %}
                     {% endfor %}
