@@ -59,7 +59,7 @@ def check_for_new_data():
 
     # If existing file doesn't exist, we consider everything as new
     if not os.path.exists(modified_file_path):
-        print("Keine bestehenden Daten gefunden. Update erforderlich.")
+        print("Update erforderlich.")
         return True
 
     df_existing = pd.read_csv(modified_file_path, delimiter=';')
@@ -77,10 +77,10 @@ def check_for_new_data():
 
     diff = new_keys - existing_keys
     if len(diff) > 0:
-        print(f"Neue Daten erkannt. Anzahl neue Einträge: {len(diff)}")
+        print(f"Neue Daten erkannt.")
         return True
     else:
-        print("Keine neuen, unverarbeiteten Daten gefunden.")
+        print("Keine neuen Daten gefunden.")
         return False
 
 def update_dataset():
