@@ -9,6 +9,14 @@ from rapidfuzz import process
 import json
 import re
 import math
+from Dataset_Update.dataset_manipulation import (
+    verify_directories,
+    download_csv,
+    check_for_new_data,
+    update_dataset,
+    harmonize_team_names,
+    git_commit_and_push,
+)
 
 app = Flask(__name__, static_folder='Static')
 app.config['DATABASE'] = os.path.join(app.instance_path, 'users.db')
@@ -17,14 +25,33 @@ app.config['SECRET_KEY'] = 'supersecretkey'
 # Initialisiere die Datenbank mit der App
 db.init_app(app)
 
-# Datensatz
-df = pd.read_csv("Datasets/Updated_Games.csv", delimiter=';')
-
 # Stelle sicher, dass der Ordner für Instanzdateien existiert
 try:
     os.makedirs(app.instance_path, exist_ok=True)
 except OSError as e:
     print(f"Error creating instance folder: {e}")
+
+# Dataset update logic
+def update_dataset_on_start():
+    try:
+        verify_directories()
+        print("Starting dataset update...")
+        download_csv()
+
+        if check_for_new_data():
+            update_dataset()
+            harmonize_team_names()
+            git_commit_and_push()
+        else:
+            print("No new data. Continuing with the existing dataset.")
+    except Exception as e:
+        print(f"Error during dataset update: {e}")
+
+# Run dataset update logic before loading data
+update_dataset_on_start()
+
+# Load the updated dataset
+df = pd.read_csv("Datasets/Updated_Games.csv", delimiter=';')
 
 # Funktion, um einen freien Port zu finden
 def find_open_port():
@@ -448,16 +475,16 @@ def handle_prediction():
 
     # Zusatzübersichten erstellen
     most_likely_teams = [
-        f"{game['game']} ({game['home_probability']}% Home Win)" if game['home_probability'] > 60 else
-        f"{game['game']} ({game['away_probability']}% Away Win)" if game['away_probability'] > 60 else None
-        for game in probabilities
-    ]
-    most_likely_teams = [team for team in most_likely_teams if team is not None]
+    f"{game['game']} ({game['home_probability']}% Home Win)" if game['home_probability'] > 50 else
+    f"{game['game']} ({game['away_probability']}% Away Win)" if game['away_probability'] > 50 else None
+    for game in probabilities
+]
+    most_likely_teams = [team for team in most_likely_teams if team]
 
     high_goal_games = [
-        f"{game['game']} ({game['over_2_5_prob']}% over 2.5 goals)"
-        for game in probabilities if game['over_2_5_prob'] > 50
-    ]
+    f"{game['game']} ({game['over_2_5_prob']}% over 2.5 goals)"
+    for game in probabilities if game['over_2_5_prob'] > 40
+]
 
     return render_template(
         'selectedprediction.html',
