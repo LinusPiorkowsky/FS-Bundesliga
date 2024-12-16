@@ -28,45 +28,72 @@ def download_csv():
     else:
         print(f"Fehler beim Herunterladen der Datei: {response.status_code}")
         raise Exception("Download fehlgeschlagen!")
+# datensatz vorbereiten auf check
+def prepare_dataframe(df):
+    # Convert date to a uniform format
+    if 'Date' in df.columns:
+        df['Date'] = pd.to_datetime(df['Date'], dayfirst=True).dt.strftime('%Y-%m-%d')
+    # Strip whitespace from team names if present
+    if 'HomeTeam' in df.columns and df['HomeTeam'].dtype == 'object':
+        df['HomeTeam'] = df['HomeTeam'].str.strip()
+    if 'AwayTeam' in df.columns and df['AwayTeam'].dtype == 'object':
+        df['AwayTeam'] = df['AwayTeam'].str.strip()
+    return df
+
+def harmonize_team_names_in_df(df, official_teams):
+    def find_best_match(team_name, choices):
+        match, score, _ = process.extractOne(team_name, choices)
+        return match if score > 60 else team_name
+
+    df['HomeTeam'] = df['HomeTeam'].apply(lambda x: find_best_match(x, official_teams))
+    df['AwayTeam'] = df['AwayTeam'].apply(lambda x: find_best_match(x, official_teams))
+    return df
 
 # Überprüfen, ob neue Daten vorhanden sind
 def check_for_new_data():
     file_path = os.path.join(DATASET_UPDATE_DIR, 'D1.csv')
     modified_file_path = os.path.join(DATASETS_DIR, 'Updated_Games.csv')
 
-    # Neue CSV laden 
     df_new = pd.read_csv(file_path, sep=',')
+    df_new = prepare_dataframe(df_new)
 
-    # Bestehende Daten laden
-    if os.path.exists(modified_file_path):
-        df_existing = pd.read_csv(modified_file_path, delimiter=';')
-
-        # Überprüfen, ob neue Zeilen existieren
-        existing_rows = len(df_existing)
-        new_rows = len(df_new)
-        
-        if new_rows > existing_rows:
-            print(f"Neue Daten erkannt. Bestehende Zeilen: {existing_rows}, Neue Zeilen: {new_rows}")
-            return True  # Neue Daten vorhanden
-        else:
-            print("Keine neuen Daten zum Aktualisieren gefunden.")
-            return False  # Keine neuen Daten
-    else:
+    # If existing file doesn't exist, we consider everything as new
+    if not os.path.exists(modified_file_path):
         print("Keine bestehenden Daten gefunden. Update erforderlich.")
-        return True  # Kein vorheriges Dataset vorhanden
+        return True
 
-# Modifizieren und Anhängen der Daten
+    df_existing = pd.read_csv(modified_file_path, delimiter=';')
+    df_existing = prepare_dataframe(df_existing)
+
+    # Identify keys
+    if not all(col in df_new.columns for col in ['Date', 'HomeTeam', 'AwayTeam']):
+        raise ValueError("Spalten Date, HomeTeam oder AwayTeam fehlen in der neuen CSV.")
+    if not all(col in df_existing.columns for col in ['Date', 'HomeTeam', 'AwayTeam']):
+        raise ValueError("Spalten Date, HomeTeam oder AwayTeam fehlen in der bestehenden CSV.")
+
+    # Create sets of keys
+    existing_keys = set(zip(df_existing['Date'], df_existing['HomeTeam'], df_existing['AwayTeam']))
+    new_keys = set(zip(df_new['Date'], df_new['HomeTeam'], df_new['AwayTeam']))
+
+    diff = new_keys - existing_keys
+    if len(diff) > 0:
+        print(f"Neue Daten erkannt. Anzahl neue Einträge: {len(diff)}")
+        return True
+    else:
+        print("Keine neuen, unverarbeiteten Daten gefunden.")
+        return False
+
 def update_dataset():
     file_path = os.path.join(DATASET_UPDATE_DIR, 'D1.csv')
     modified_file_path = os.path.join(DATASETS_DIR, 'Updated_Games.csv')
 
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Datei {file_path} nicht gefunden. Bitte sicherstellen, dass der Download erfolgreich war.")
-    
-    # Neue CSV laden 
+    # Neue CSV laden
     df_new = pd.read_csv(file_path, sep=',')
+    df_new = prepare_dataframe(df_new)
 
-    # Umbenennen und zusätzliche Spalten hinzufügen
+     #Umbenennen und zusätzliche Spalten hinzufügen
     df_new_modified = df_new[['Date', 'HomeTeam', 'AwayTeam', 'FTHG', 'FTAG', 'FTR', 'HS', 'AS', 'HST', 'AST', 'HC', 'AC', 'HY', 'AY', 'HR', 'AR']].copy()
     df_new_modified.columns = [
         'Date', 'HomeTeam', 'AwayTeam', 'HomeTeamGoals', 'AwayTeamGoals', 'Result',
@@ -74,32 +101,43 @@ def update_dataset():
         'HomeTeamCorners', 'AwayTeamCorners', 'HomeTeamYellow', 'AwayTeamYellow',
         'HomeTeamRed', 'AwayTeamRed'
     ]
-    df_new_modified.insert(0, 'Index', range(1, len(df_new_modified) + 1))
-    df_new_modified.insert(1, 'Season', '2024')  # Saison dynamisch anpassen
+
+    df_new_modified.insert(0, 'Index', range(1, len(df_new_modified)+1))
+    df_new_modified.insert(1, 'Season', '2024')
     df_new_modified.insert(2, 'Gameday', (df_new_modified.index // 9) + 1)
 
-    # Bestehende Daten laden
     if os.path.exists(modified_file_path):
         df_existing = pd.read_csv(modified_file_path, delimiter=';')
-        
-        # Kombinieren 
-        combined_df = pd.concat([df_existing, df_new_modified], ignore_index=True)
-        
-        # Doppelte Einträge entfernen
-        combined_df.drop_duplicates(subset=['Date', 'HomeTeam', 'AwayTeam'], inplace=True)
-        
-        # Index neu setzen
-        combined_df.reset_index(drop=True, inplace=True)
-        combined_df['Index'] = range(1, len(combined_df) + 1)
+        df_existing = prepare_dataframe(df_existing)
+
+        # If you harmonize team names in Updated_Games.csv, do it here for df_new_modified as well:
+        # Load official team names from your gameplan (adjust path and code as needed)
+        gameplan_path = os.path.join(DATASETS_DIR, 'gameplan_24_25.csv')
+        gameplan = pd.read_csv(gameplan_path, sep=',', encoding='utf-8')
+        official_teams = set(gameplan['HomeTeam']).union(set(gameplan['AwayTeam']))
+
+        df_new_modified = harmonize_team_names_in_df(df_new_modified, official_teams)
+        df_existing = harmonize_team_names_in_df(df_existing, official_teams)
+
+        # Filter only truly new rows by anti-join
+        merged = pd.merge(df_new_modified, df_existing[['Date', 'HomeTeam', 'AwayTeam']], 
+                          on=['Date','HomeTeam','AwayTeam'], how='left', indicator=True)
+        new_rows = merged[merged['_merge'] == 'left_only'].drop(columns='_merge')
+
+        if len(new_rows) > 0:
+            combined_df = pd.concat([df_existing, new_rows], ignore_index=True)
+            combined_df.drop_duplicates(subset=['Date', 'HomeTeam', 'AwayTeam'], inplace=True)
+            combined_df.reset_index(drop=True, inplace=True)
+            combined_df['Index'] = range(1, len(combined_df) + 1)
+            combined_df.to_csv(modified_file_path, sep=';', index=False)
+            print(f"{len(new_rows)} neue Zeilen wurden hinzugefügt. Datei aktualisiert: {modified_file_path}")
+        else:
+            print("Keine neuen Zeilen zum Hinzufügen gefunden.")
     else:
-        # Wenn keine bestehenden Daten vorhanden sind, nur die neuen verwenden
-        combined_df = df_new_modified
+        # No existing data, just save the new file
+        df_new_modified.to_csv(modified_file_path, sep=';', index=False)
+        print(f"Keine bisherigen Daten vorhanden. Neue Datei erstellt: {modified_file_path}")
 
-    # Geänderte Datei mit Semikolon speichern
-    combined_df.to_csv(modified_file_path, sep=';', index=False)
-    print(f"Datei wurde erfolgreich aktualisiert: {modified_file_path}")
-
-# Mapping
 def harmonize_team_names():
     updated_games_path = os.path.join(DATASETS_DIR, 'Updated_Games.csv')
     gameplan_path = os.path.join(DATASETS_DIR, 'gameplan_24_25.csv')
@@ -107,19 +145,9 @@ def harmonize_team_names():
     updated_games = pd.read_csv(updated_games_path, sep=';', encoding='utf-8')
     gameplan = pd.read_csv(gameplan_path, sep=',', encoding='utf-8')
 
-    # Extrahiere die Teamnamen aus gameplan_24_25
     official_teams = set(gameplan['HomeTeam']).union(set(gameplan['AwayTeam']))
-    
-    # Funktion zur Suche nach dem besten Match
-    def find_best_match(team_name, choices):
-        match, score, _ = process.extractOne(team_name, choices)
-        return match if score > 60 else team_name  # Setze einen Ähnlichkeitsschwellenwert
-    
-    # Harmonisiere Home- und Away-Teamnamen in updated_games
-    updated_games['HomeTeam'] = updated_games['HomeTeam'].apply(lambda x: find_best_match(x, official_teams))
-    updated_games['AwayTeam'] = updated_games['AwayTeam'].apply(lambda x: find_best_match(x, official_teams))
-    
-    # Speichere den harmonisierten Datensatz mit Semikolon-Trennzeichen
+    updated_games = harmonize_team_names_in_df(updated_games, official_teams)
+
     updated_games.to_csv(updated_games_path, sep=';', index=False)
     print(f"Harmonisierte Daten gespeichert unter: {updated_games_path}")
 
@@ -128,19 +156,15 @@ def git_commit_and_push():
         repo_path = "/Users/linus/FS-Bundesliga"
         os.chdir(repo_path)
         
-        # Checken ob Git repo
         if not os.path.exists(os.path.join(repo_path, '.git')):
             print("Not a Git repository. Skipping commit.")
             return
         
-        # Auto Commit
         subprocess.run(['git', 'add', 'Datasets/Updated_Games.csv'], check=True)
         
-        # Commit 
         commit_message = f"Update Bundesliga data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         subprocess.run(['git', 'commit', '-m', commit_message], check=True)
         
-        # Push to main
         subprocess.run(['git', 'push'], check=True)
         
         print("Successfully committed and pushed to GitHub!")
@@ -156,7 +180,7 @@ if __name__ == "__main__":
 
     if check_for_new_data():
         update_dataset()
-        harmonize_team_names()
+        # harmonize_team_names() #testen ob jedes mal notwendig
         git_commit_and_push()
     else:
         print("Keine neuen Daten. Beende das Skript.")
