@@ -171,7 +171,7 @@ def prediction():
     # zukünftige Spieltage laden und in Dropdown Menü laden
     games_df = pd.read_csv('Datasets/gameplan_24_25.csv', sep=',', encoding='utf-8')
     games_df['Date'] = pd.to_datetime(games_df['Date'], dayfirst=True)
-    futuregames = games_df[games_df['Date'] > pd.to_datetime('today')]
+    futuregames = games_df[games_df['Date'] >= pd.to_datetime('today').normalize()]
 
     if futuregames.empty:
         gamedays = []
@@ -191,7 +191,7 @@ def handle_prediction():
     # Spiele für den ausgewählten Gameday filtern
     games_df = pd.read_csv('Datasets/gameplan_24_25.csv', sep=',', encoding='utf-8')
     games_df['Date'] = pd.to_datetime(games_df['Date'], dayfirst=True)
-    futuregames = games_df[games_df['Date'] > pd.to_datetime('today')]
+    futuregames = games_df[games_df['Date'] >= pd.to_datetime('today').normalize()]
 
     # Sicherstellen, dass der Spieltag in Integer umgewandelt werden kann
     try:
