@@ -160,6 +160,8 @@ users.db
 # macOS .DS_Store file
 .DS_Store
 
+#Dataset
+Dataset_Update/D1.csv
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
