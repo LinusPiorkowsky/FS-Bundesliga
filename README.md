@@ -128,30 +128,3 @@ This document explains the step-by-step logic used to calculate probabilities fo
 
       Equal Weighting:
       Goal strength and win ratios are equally weighted to balance attacking and winning performance.
-
-
-## How to Update the Dataset
-
-Follow these steps to update the `Updatet_games.csv` file with the latest data:
-
-1. **Download the Latest Data**
-   - Open the link: [Bundesliga Data](https://www.football-data.co.uk/germanym.php)
-   - Download the CSV file for the **2024/2025 Season - Bundesliga 1**.
-
-2. **Place the CSV in the Project Folder**
-   - Move the downloaded CSV file into the `Dataset_Update` folder in this project.
-
-3. **Set the File Path in the Script**
-   - Copy the relative path of the downloaded CSV file (e.g., `Dataset_Update/your_downloaded_file.csv`).
-   - Open `dataset_manipulation.py` and update the `file_path` variable on **line 4** with the new path.
-
-4. **Run the Script**
-   - Run `dataset_manipulation.py` to process the new data and update `Updatet_games.csv`.
-
-5. **Cleanup**
-   - After running the script, delete the downloaded CSV file from the `Dataset_Update` folder to keep the project directory organized.
-
-6. **Confirmation**
-   - The `Updatet_games.csv` file has now been updated with the latest game data.
-
-
