@@ -635,7 +635,7 @@ def get_team_insights(team_name):
     highest_win_detail = f"{highest_win_score} vs {highest_win_opponent}"
     
     # Overall rating
-    rating = round((avg_goals_scored * 10 - avg_goals_conceded * 5 + clean_sheets * 10), 2)
+    rating = round((avg_goals_scored * 15 + total_shots_on_target * 10 - avg_goals_conceded * 20 + clean_sheets * 7), 2)
     rating = min(max(int(rating), 1), 100)
     
     return {
