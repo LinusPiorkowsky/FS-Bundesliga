@@ -110,8 +110,6 @@ def update_dataset():
         df_existing = pd.read_csv(modified_file_path, delimiter=';')
         df_existing = prepare_dataframe(df_existing)
 
-        # If you harmonize team names in Updated_Games.csv, do it here for df_new_modified as well:
-        # Load official team names from your gameplan (adjust path and code as needed)
         gameplan_path = os.path.join(DATASETS_DIR, 'gameplan_24_25.csv')
         gameplan = pd.read_csv(gameplan_path, sep=',', encoding='utf-8')
         official_teams = set(gameplan['HomeTeam']).union(set(gameplan['AwayTeam']))
