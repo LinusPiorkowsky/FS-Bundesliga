@@ -18,7 +18,7 @@ This component provides the user interface for user authentication. It includes:
 - Password input field
 - Login button
 
-![Login Screen](docs/assets/images/Login.png)
+![Login Screen](assets/images/Login.png)
 
 ---
 
@@ -30,7 +30,7 @@ The registration component allows new users to create an account. It includes:
 - Choose favorite team dropdown
 - Registration button
 
-![Register Screen](docs/assets/images/Register.png)
+![Register Screen](assets/images/Register.png)
 
 ---
 
@@ -45,8 +45,8 @@ The home screen serves as the main dashboard after login. It includes:
 - Latest gameday results
 - Current Bundesliga table
 
-![Home Screen](docs/assets/images/welcome.png)
-![Home Screen 2](docs/assets/images/welcome2.png)
+![Home Screen](assets/images/welcome.png)
+![Home Screen 2](assets/images/welcome2.png)
 
 ---
 
@@ -55,8 +55,8 @@ The results screen displays historic data from 2016:
 - Bundesliga gamedays
 - Bundesliga tables
 
-![Results Screen](docs/assets/images/results.png)
-![Results Screen 2](docs/assets/images/results2.png)
+![Results Screen](assets/images/results.png)
+![Results Screen 2](assets/images/results2.png)
 
 ---
 
@@ -67,8 +67,8 @@ The prediction component handles forecasting on historic data. It includes:
     - Green color for high probability
     - Red color for low probability
 
-![Prediction Screen](docs/assets/images/Prediction.png)
-![Prediction Screen 2](docs/assets/images/Prediction2.png)
+![Prediction Screen](assets/images/Prediction.png)
+![Prediction Screen 2](assets/images/Prediction2.png)
 
 ---
 
@@ -79,8 +79,8 @@ This component provides insights about the user's favorite team. It includes:
     - Trophies 
 - Performance data
 
-![Favorite Team Screen](docs/assets/images/team.png)
-![Favorite Team Screen 2](docs/assets/images/team2.png)
+![Favorite Team Screen](assets/images/team.png)
+![Favorite Team Screen 2](assets/images/team2.png)
 
 ---
 
@@ -91,4 +91,4 @@ The user settings component provides configuration options for the user. It incl
     - Password
     - Favorite Team
 
-![User Settings Screen](assets/images/user_settings_screen.png)
+![User Settings Screen](assets/images/User_settings.png)
