@@ -1,5 +1,5 @@
 ---
-title: Usability Assessment
+title: User Evaluation
 nav_order: 4
 ---
 
@@ -7,7 +7,7 @@ nav_order: 4
 [Linus Piorkowsky]
 
 {: .no_toc }
-# User Experience Review
+# User Evaluation
 
 <details open markdown="block">
 {: .text-delta }
