@@ -25,7 +25,7 @@ nav_order: 3
 Status  
 : **Decided**  
 
-Updated - Decision Date
+Updated
 : 07-Nov-2024  
 
 ### Problem Statement  
@@ -72,7 +72,7 @@ By limiting the dataset to the **last 8 seasons**, the Bundesliga Predictor app 
 Status  
 : **Decided**  
 
-Updated - Decision Date
+Updated
 : 17-Nov-2024  
 
 ### Problem Statement
@@ -104,8 +104,8 @@ We implemented a feature that lets users **choose their favorite team** when cre
 Status  
 : **Decided**  
 
-Updated - Decision Date:   
-18-Nov-2024  
+Updated
+: 18-Nov-2024  
 
 ### Problem Statement  
 
@@ -139,7 +139,7 @@ We included a **Team Performance Metrics** feature, which provides:
 Status  
 : **Decided**  
 
-Updated - Decision Date
+Updated
 : 25-Nov-2024  
 
 ### Problem Statement  
@@ -188,7 +188,7 @@ By **automatically mapping team names**, the Bundesliga Predictor app can **accu
 Status  
 : **Decided**  
 
-Updated - Decision Date
+Updated
 : 25-Nov-2024  
 
 ### Problem Statement  
@@ -236,7 +236,7 @@ By choosing a statistics-based approach, we ensured that the **Bundesliga Predic
 Status  
 : **Decided**  
 
-Updated - Decision Date:
+Updated
 : 28-Nov-2024  
 
 ### Problem Statement  
@@ -289,7 +289,7 @@ These design decisions were made to optimize user experience, provide meaningful
 Status  
 : **Denied**  
 
-Updated - Decision Date:
+Updated
 : 03-Dec-2024  
 
 ### Problem Statement  
@@ -335,7 +335,7 @@ By **excluding direct betting**, the Bundesliga Predictor app remains a **neutra
 Status  
 : **Decided**  
 
-Updated - Decision Date:
+Updated
 : 05-Dec-2024  
 
 ### Problem Statement  
