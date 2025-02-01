@@ -1,130 +1,62 @@
-# FS-Bundesliga
+# **Bundesliga Predictor Repository**
 
-This app will allow users to explore past Bundesliga results and get basic predictions for future games based on historical trends. It will focus on simplicity, using straightforward statistics to show likely outcomes.
+**Bundesliga Predictor** is a web application built with Flask and SQLite. Developed as a projekt of the Full-Stack Web Development course at HWR Berlin, this repository contains the full codebase and documentation with GitHub Pages.
 
-Key Features:
-- Historical Data Overview: Users can view team results over the past 8 seasons, including win/loss records and points earned each season.
-- Basic Prediction Feature: Using simple stats (like win rates and home vs. away performance), the app will predict if a team is likely to win, lose, or draw their next game.
-- Team Comparison: Users can pick two teams to compare their past matchups, showing results from the last few seasons.
-- Simple Match Insights: For each upcoming game, the app will show basic insights, such as each team’s recent performance and a percentage-based likelihood of winning.
+## **Repository Contents**  
+This repository contains the source code for the Bundesliga Predictor app, including data processing, prediction logic, and a basic web interface.  
+Additionally, there is a setup for **GitHub Pages documentation**, which you can view here:  
+[Bundesliga Predictor Documentation](https://linuspiorkowsky.github.io/FS-Bundesliga/)  
 
-Value Proposition:
-The app provides Bundesliga fans with an easy way to understand team trends and get basic predictions for upcoming games without advanced features. It’s ideal for fans who want a quick look at likely outcomes based on past performance.
+---
 
-Goals:
-Simple and Functional: Develop a straightforward app with easy-to-understand features, focusing on team comparisons and simple predictions.
-User-Friendly Interface: Make a clean, basic interface that anyone can use without technical knowledge.
+## **Steps to Execute the App**  
 
-Predcition features per game:
-- Probabilty of a win
-- probability of a draw
-- Probbaility to score more or less then 1,5 goals 
-- probabability to score more or less then 2,5 goals
+### **Step 1: Set up a Python Virtual Environment**  
+Run the following command to create and activate a virtual environment:  
 
+```bash
+python3 -m venv venv
+```
+or
+```bash
+source venv/bin/activate  # For Windows use 'venv\Scripts\activate'
+```
 
-## Bundesliga Match Outcome Prediction Logic
-This document explains the step-by-step logic used to calculate probabilities for match outcomes (home win, draw, away win) in Bundesliga matches. The prediction method is only based on current season data at the moment, tailored to the unique characteristics of the Bundesliga. Anyhow, the past_season data is already provided and accessable within the code. We just need to agree to a certain logic to implement the outcome of the last seasons.
+### **Step 2: Install Requirements**
+```bash
+pip install -r requirements.txt
+```
 
+### **Step 3: Start the Development Server**
 
+```bash
+flask run
+```
 
-   **Step 1: Basic Probabilities**
-      The foundation of the prediction model is derived from historical Bundesliga match data (Updated_Games.csv):
+**Expected output:**
 
-      Home Win Probability:
-      Percentage of matches where the home team won: 44.95%.
+```plaintext
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment.
+Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5000
+Press CTRL+C to quit
+```
 
-      Away Win Probability:
-      Percentage of matches where the away team won: 30.23%.
+### **Step 4: Access the Application**
+Go to [http://127.0.0.1:5000/](http://127.0.0.1:5000/) to view the login page and start using the Bundesliga Predictor.
 
-      Draw Probability:
-      Percentage of matches that ended in a draw: 24.81%.
+---
 
-      Key Assumption:
-      These probabilities are specific to Bundesliga matches to account for league-specific factors such as home-field advantage and playing styles.
+## Features
+The **Bundesliga Predictor** has the following features:
+- **Match Predictions:** Calculates probabilities for match outcomes based on historical and current team performance.
+- **Team Insights:** Provides statistics on goals, wins, and efficiency metrics for each team.
+- **Historic Results:** Provides Bundesliga outcomes from 2016 until today.
+- **Live Updates:** Datasets are updated every week.
 
-   **Step 2: Gathering Relevant Team Statistics**
-      For the example match 1. FC Union Berlin vs. Bayer 04 Leverkusen (Matchday 12), the following data is extracted:
+---
 
-      Current Season Data:
+## NextGen Creators
 
-      1. FC Union Berlin (Home Team):
-
-         Goals scored at home: 6.
-         Home wins: 3.
-         Bayer 04 Leverkusen (Away Team):
-         Goals scored away: 11.
-         Away wins: 2.
-         Historical Data:
-
-      Union Berlin:
-         Goals scored at home across all shared seasons: 133.
-         Leverkusen:
-         Goals scored away across all shared seasons: 194.
-
-   **Step 3: Adjusting Probabilities Using Team-Specific Data**
-      A. Goal-Based Strength Adjustment
-      The difference in goals is calculated to gauge the relative attacking strength of both teams:
-
-      Home Goals (Union Berlin): 6
-      Away Goals (Leverkusen): 11
-      Goal Difference: 6 - 11 = -5
-      This negative difference indicates that Leverkusen's away attacking performance outweighs Union Berlin's home attacking performance.
-
-      B. Win-Based Adjustment
-      We incorporate the win counts for both teams this season:
-
-      Union Berlin (Home Wins): 3
-      Leverkusen (Away Wins): 2
-      Win Ratio: 3 / 2 = 1.50
-
-      C. Combined Strength-Win Adjustment
-      To balance the goal-based adjustment and win-based adjustment, we calculate the strength-win ratio:
-      Strength-Win Ratio: (6 + 3) / (11 + 2) = 9 / 13 ≈ 0.69
-
-   **Step 4: Adjusting Probabilities for Draws**
-      The draw probability is dynamically adjusted based on the similarity in the strengths and win rates of the teams:
-
-      Closer strength-win ratio to 1: Higher draw probability (evenly matched teams).
-      Further from 1: Lower draw probability (clear favorite emerges).
-      For this match:
-      Strength-Win Ratio: 0.69
-      This indicates a moderate edge for Leverkusen, reducing the draw probability slightly.
-
-      Draw Adjustment:
-      Draw Adjustment: (1 - abs(1 - 0.69)) * Scaling Factor
-      Adjusted Draw Probability: 18.12%
-
-   **Step 5: Final Probability Distribution**
-      The remaining probability (after adjusting for draws) is distributed between home and away wins, weighted by the adjusted strengths and wins.
-
-      Steps:
-      Calculate Total Strength + Wins:
-
-      Union Berlin Total Strength: 6 + 3 = 9
-      Leverkusen Total Strength: 11 + 2 = 13
-      Total Strength: 9 + 13 = 22
-      
-      Calculate Home Win Probability:
-      
-      Home Probability: 
-         Base Home Probability + (9 / 22 * Remaining Probability)
-
-      Calculate Away Win Probability:
-         Away Probability: Base Away Probability + (13 / 22 * Remaining Probability)
-
-      Final Output
-         For the example match 1. FC Union Berlin vs. Bayer 04 Leverkusen:
-
-         Home Win Probability: 41.60%
-         Draw Probability: 18.12%
-         Away Win Probability: 40.28%
-      
-   **Key Assumptions**
-      Current Season Data:
-      Only current season statistics (goals, wins) are used for strength calculations to ensure predictions reflect recent performance.
-
-      League-Specific Trends:
-      Probabilities are based exclusively on Bundesliga data to account for unique characteristics of the league.
-
-      Equal Weighting:
-      Goal strength and win ratios are equally weighted to balance attacking and winning performance.
+Thank you for exploring our **Bundesliga Predictor** project! We, **Linus Piorkowsky** and **Henry Lückewille**, appreciate your interest and support. 
