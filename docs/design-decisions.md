@@ -4,7 +4,7 @@ nav_order: 3
 ---
 
 {: .label }
-[Bundesliga Predictor Team]
+[Linus Piorkowsky & Henry Lückewille]
 
 {: .no_toc }
 # Design Decisions
