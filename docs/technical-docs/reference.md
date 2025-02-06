@@ -5,17 +5,10 @@ nav_order: 3
 ---
 
 {: .label }
-[Jane Dane]
+[Linus Piorkowsky & Henry Lückewille]
 
 {: .no_toc }
 # Reference documentation
-
-{: .attention }
-> This page collects internal functions, routes with their functions, and APIs (if any).
-> 
-> See [Uber](https://developer.uber.com/docs/drivers/references/api) or [PayPal](https://developer.paypal.com/api/rest/) for exemplary high-quality API reference documentation.
->
-> You may delete this `attention` box.
 
 <details open markdown="block">
 {: .text-delta }
@@ -24,62 +17,269 @@ nav_order: 3
 {: toc }
 </details>
 
-## [Section / module]
+## Data Management
 
-### `function_definition()`
+### `update_dataset_on_start()`
 
-**Route:** `/route/`
+**Route:** None (Initialization function)
 
-**Methods:** `POST` `GET` `PATCH` `PUT` `DELETE`
+**Methods:** None
 
-**Purpose:** [Short explanation of what the function does and why]
+**Purpose:** Initializes and updates the dataset on application startup. Verifies directories, downloads new CSV data, and updates the dataset if new data is available.
 
-**Sample output:**
-
-[Show an image, string output, or similar illustration -- or write NONE if function generates no output]
+**Sample output:** Console logs indicating successful dataset update or error messages.
 
 ---
 
-## [Example, delete this section] Show to-do lists
+### `verify_directories()`
 
-### `get_lists()`
+**Route:** None (Helper function)
 
-**Route:** `/lists/`
+**Methods:** None
 
-**Methods:** `GET`
+**Purpose:** Verifies existence of required data directories DATASET_UPDATE_DIR and DATASETS_DIR.
 
-**Purpose:** Show all to-do lists.
-
-**Sample output:**
-
-![get_lists() sample](../assets/images/fswd-intro_00.png)
+**Sample output:** FileNotFoundError if directories don't exist
 
 ---
 
-### `get_list_todos(list_id)`
+### `download_csv()`
 
-**Route:** `/lists/<int:list_id>`
+**Route:** None (Helper function)
 
-**Methods:** `GET`
+**Methods:** None
 
-**Purpose:** Retrieve all to-do items of to-do list with ID `list_id` from database and present to user.
+**Purpose:** Downloads current season Bundesliga data from football-data.co.uk.
 
-**Sample output:**
-
-![get_list_todos() sample](../assets/images/fswd-intro_02.png)
+**Sample output:** CSV file saved to DATASET_UPDATE_DIR or exception on failure
 
 ---
 
-## [Example, delete this section] Insert sample data
+### `prepare_dataframe(df)`
 
-### `run_insert_sample()`
+**Route:** None (Helper function)
 
-**Route:** `/insert/sample`
+**Methods:** None
+
+**Purpose:** Standardizes DataFrame formatting:
+- Converts dates to YYYY-MM-DD
+- Strips whitespace from team names
+
+**Sample output:** Cleaned DataFrame
+
+---
+
+### `harmonize_team_names_in_df(df, official_teams)`
+
+**Route:** None (Helper function)
+
+**Methods:** None
+
+**Purpose:** Matches and standardizes team names using fuzzy matching with official team list.
+
+**Sample output:** DataFrame with standardized team names
+
+---
+
+### `harmonize_team_names()`
+
+**Route:** None (Helper function)
+
+**Methods:** None
+
+**Purpose:** Standardizes team names across datasets by comparing against official team list from gameplan and updating the games database.
+
+**Sample output:** Updated CSV file with harmonized team names
+
+---
+
+### `check_for_new_data()`
+
+**Route:** None (Helper function)
+
+**Methods:** None
+
+**Purpose:** Compares downloaded data with existing dataset to identify new entries.
+
+**Sample output:** Boolean indicating if new data exists
+
+---
+
+### `git_commit_and_push()`
+
+**Route:** None (Helper function)
+
+**Methods:** None
+
+**Purpose:** Automates Git operations for dataset updates:
+- Adds Updated_Games.csv
+- Commits with timestamped message
+- Pushes to GitHub repository
+
+**Sample output:** Console confirmation of successful Git operations or error messages
+
+---
+
+## Authentication
+
+### `login_required(f)`
+
+**Route:** None (Decorator)
+
+**Methods:** None
+
+**Purpose:** Decorator function that ensures user authentication before accessing protected routes. Redirects to login page if user is not authenticated.
+
+**Sample output:** None (Redirects to login page if not authenticated)
+
+---
+
+### `register()`
+
+**Route:** `/register`
+
+**Methods:** `GET`, `POST`
+
+**Purpose:** Handles user registration with validation for username, password, and favorite team selection. Validates password complexity and uniqueness of username.
+
+**Sample output:** Registration form or redirect to login page with success message
+
+---
+
+### `login()`
+
+**Route:** `/login`
+
+**Methods:** `GET`, `POST`
+
+**Purpose:** Handles user authentication, verifies credentials, and establishes user session.
+
+**Sample output:** Login form or redirect to index page with success message
+
+---
+
+### `logout()`
+
+**Route:** `/logout`
 
 **Methods:** `GET`
 
-**Purpose:** Flush the database and insert sample data set
+**Purpose:** Terminates user session and redirects to login page.
+
+**Sample output:** Redirect to login page with logout confirmation message
+
+---
+
+## Main Views
+
+### `index()`
+
+**Route:** `/`
+
+**Methods:** `GET`
+
+**Purpose:** Displays the main dashboard with latest season data, gameday information, and user-specific content. Shows current standings and match results.
 
 **Sample output:**
+- User information
+- Latest match results
+- Current season standings
+- Team rankings and statistics
 
-Browser shows: `Database flushed and populated with some sample data.`
+---
+
+### `view_results()`
+
+**Route:** `/results`
+
+**Methods:** `GET`
+
+**Purpose:** Shows match results with filtering options for season and gameday. Displays standings and detailed match statistics.
+
+**Sample output:**
+- Filtered match results
+- Season standings
+- Team statistics and rankings
+- Gameday selection options
+
+---
+
+## Prediction System
+
+### `prediction()`
+
+**Route:** `/prediction`
+
+**Methods:** `GET`
+
+**Purpose:** Initializes the prediction interface showing future gamedays for match predictions.
+
+**Sample output:** Prediction form with available future gamedays
+
+---
+
+### `handle_prediction()`
+
+**Route:** `/prediction/handle`
+
+**Methods:** `POST`
+
+**Purpose:** Processes match predictions using historical data and statistical analysis. Calculates win probabilities and goal statistics.
+
+**Sample output:**
+- Match predictions
+- Win/Draw/Loss probabilities
+- Goal scoring probabilities
+- Team performance insights
+
+---
+
+## Team Analytics
+
+### `get_team_insights(team_name)`
+
+**Route:** None (Helper function)
+
+**Methods:** None
+
+**Purpose:** Calculates detailed team statistics and performance metrics for the last 5-10 games.
+
+**Sample output:**
+- Performance history
+- Average shots on target
+- Goal statistics
+- Team efficiency metrics
+- Clean sheet records
+- Overall team rating
+
+---
+
+### `get_league_averages()`
+
+**Route:** None (Helper function)
+
+**Methods:** None
+
+**Purpose:** Calculates league-wide statistics and averages for comparative analysis.
+
+**Sample output:**
+- League average statistics
+- Goal metrics
+- Team efficiency comparisons
+- Season records
+
+---
+
+### `team_insights()`
+
+**Route:** `/team-insights`
+
+**Methods:** `GET`
+
+**Purpose:** Displays comprehensive team analysis and comparison with league averages for the user's favorite team.
+
+**Sample output:**
+- Detailed team statistics
+- League comparison metrics
+- Performance visualizations
+- Historical records
