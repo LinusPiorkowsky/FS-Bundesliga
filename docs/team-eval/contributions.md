@@ -19,7 +19,7 @@ nav_order: 4
 
 # Project Contributions
 
-## Henry Luke Wille's Contributions
+## Henry Lükewille's Contributions
 
 ### 2024-11-09
 - **Added logout logic**  
