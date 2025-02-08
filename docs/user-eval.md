@@ -4,7 +4,7 @@ nav_order: 4
 ---
 
 {: .label }
-[Linus Piorkowsky]
+[Linus Piorkowsky,Henry Lükewille]
 
 {: .no_toc }
 # User Evaluation
@@ -20,137 +20,134 @@ nav_order: 4
 
 ### Meta
 
-Status
-: **Completed**
-
-Updated
-: 30-Jan-2025
+**Status:** Completed  
+**Updated:** 08-Feb-2025  
 
 ### Purpose
 
-Assess how users interact with the **Bundesliga Predictor** when generating and interpreting match predictions. Primary considerations:
-- Is the process of predicting a match outcome clear and straightforward?
-- Can users easily compare predicted results to actual match outcomes?
-- Do participants find the performance metrics (goals for, recent form, etc.) informative?
+Assess how users interact with the **Bundesliga Predictor** when generating and interpreting match predictions. Key questions:
+- Is the prediction process clear and intuitive?
+- Can users easily compare predictions with actual match results?
+- Are the provided performance metrics (goals for, recent form, etc.) informative?
 
 ### Procedure
 
-1. Selected 5 football enthusiasts with varying degrees of technology fluency.  
+1. Selected five football enthusiasts with varying levels of tech fluency.  
 2. Instructed them to:
    - Create an account.
    - Generate predictions for upcoming Bundesliga fixtures.
-   - Examine past predictions and compare them to real scores.
+   - Compare past predictions to real match outcomes.
    - Explore the “Teams” section to analyze form and stats.
-3. Observed participants using a screen share and asked clarifying questions during their process.
-4. Measured time taken to complete each step and noted any difficulties encountered.
-5. Conducted brief follow-up interviews to gather detailed feedback and suggestions.
+3. Observed users via screen share and asked clarifying questions.
+4. Measured time taken for each step and noted challenges.
+5. Conducted brief interviews to gather feedback and suggestions.
 
 ### Observations
 
-1. **Completion Rates**
-   - Creating a prediction for a single fixture: 100% (average time: 1 minute)
-   - Viewing previous results: 100% (average time: 1 minute)
-   - Navigating team stats pages: 60% (two participants had trouble understanding advanced metrics)
+#### Completion Rates
+- Creating a prediction: **100%** (Avg. time: 1 min)
+- Viewing previous results: **100%** (Avg. time: 1 min)
+- Navigating team stats: **60%** (Two users struggled with advanced metrics)
 
-2. **Key Insights**
-   - Users appreciated the quick overview of match histories, which made it easier to guess outcomes.
-   - The clean layout and color-coded probabilities helped users instantly see which team was favored.
-   - Some participants were unclear on how the Predictor calculates its win/draw/loss percentages.
-   - Most testers found the process of comparing past predictions with actual outcomes engaging.
+#### Key Insights
+- Users liked the quick match history overview, which made predictions easier.
+- The clean layout and color-coded probabilities enhanced usability.
+- Some were unsure how the Predictor calculates win/draw/loss probabilities.
+- Most users found comparing past predictions with actual results engaging.
 
-3. **Common Issues**
-   - Lack of a simple guide or tooltip explaining the logic behind the predictions.
-   - Advanced stats (e.g., expected goals) were hidden too deep in the interface, causing confusion.
-   - Participants wanted more real-time data, such as injury updates or team sheets.
+#### Common Issues
+- No simple guide or tooltip explaining prediction logic.
+- Advanced stats (e.g., expected goals) were difficult to find.
+- Users wanted real-time data, such as injury updates or team sheets.
 
+---
 
-## User Experience Analysis
+## 02: User Experience Analysis
 
 ### Strengths
-1. **Security**
-   - Multi-layer authentication
-   - Protected routes using login_required decorator
-   - Secure password storage
-   - Session management
 
-2. **Data Presentation**
-   - Clear statistical breakdowns
-   - Interactive elements for data filtering
-   - Comprehensive team performance metrics
-   - League-wide comparisons
+#### Security
+- Protected routes using `login_required`
+- Secure password storage
+- Session management
 
-3. **Personalization**
-   - Favorite team selection
-   - Customizable user profile
-   - Personal account management options
+#### Data Presentation
+- Clear statistical breakdowns
+- Interactive elements for filtering
+- Comprehensive team performance metrics
+- League-wide comparisons
+
+#### Personalization
+- Favorite team selection
+- Customizable user profile
+- Personal account management options
 
 ### Areas for Improvement
 
-1. **Technical Enhancements**
-   - Consider adding API rate limiting
-   - Implement data caching for better performance
-   - Add error logging system
-   - Consider adding backup database functionality
+#### Technical Enhancements
+- Implement **data caching** to improve performance
+- Introduce an **error logging system**
+- Consider **backup database functionality**
 
-2. **User Interface Suggestions**
-   - Add visual graphs for statistical data
-   - Implement mobile-responsive design
-   - Add dark mode option
-   - Include more interactive elements
+#### User Interface Improvements
+- Add **visual graphs** for statistical data
+- Implement **mobile-responsive design**
+- Include **dark mode option**
+- Increase **interactive elements**
 
-3. **Feature Additions**
-   - Head-to-head team comparisons
-   - Historical match archives
-   - Player statistics
-   - Export functionality for statistics
-   - Social features (comments, predictions sharing)
-
-## Technical Implementation Review
-
-### Positive Aspects
-1. **Code Structure**
-   - Well-organized route handlers
-   - Clear separation of concerns
-   - Proper use of decorators
-   - Comprehensive error handling
-
-2. **Data Management**
-   - Efficient database operations
-   - Regular dataset updates
-   - Data validation implementation
-   - Secure data handling
-
-3. **Security Implementation**
-   - Protected routes
-   - Secure password handling
-   - Session management
-   - Input validation
-
-### Technical Recommendations
-
-1. **Performance Optimization**
-   - Implement database indexing
-   - Add query optimization
-   - Consider caching frequently accessed data
-   - Optimize large dataset operations
-
-2. **Code Maintainability**
-   - Add more code comments
-   - Implement comprehensive logging
-   - Create API documentation
-   - Add unit tests
-
-3. **Security Enhancements**
-   - Add CSRF protection
-   - Implement rate limiting
-   - Add IP blocking for failed login attempts
-   - Enhanced session security
-
-## Conclusion
-
-This football statistics application demonstrates solid fundamental features. The combination of match results, predictions, and team insights provides valuable functionality for football enthusiasts. While the core features are well-implemented, there's room for enhancement in areas of user interface, performance optimization, and additional features.
-
-The application provides a strong foundation for a football statistics platform with potential for growth through suggested improvements and additional features.
-
+#### Feature Additions
+- **Head-to-head team comparisons**
+- **Historical match archives**
+- **Player statistics tracking**
+- **Export functionality** for statistics
+- **Social features** (comments, prediction sharing)
 
 ---
+
+## 03: Technical Implementation Review
+
+### Strengths
+
+#### Code Structure
+- Well-organized route handlers
+- Clear separation of concerns
+- Proper use of decorators
+- Comprehensive error handling
+
+#### Data Management
+- Efficient database operations
+- Regular dataset updates
+- Strong data validation
+- Secure data handling
+
+#### Security Implementation
+- Protected routes
+- Secure password handling
+- Session management
+- Input validation
+
+### Recommendations
+
+#### Performance Optimization
+- Implement **database indexing**
+- Optimize **query execution**
+- Use **caching** for frequently accessed data
+- Improve **large dataset operations**
+
+#### Code Maintainability
+- Add **more inline comments**
+- Implement **comprehensive logging**
+- Provide **API documentation**
+- Develop **unit tests**
+
+#### Security Enhancements
+- Introduce **IP blocking for failed logins**
+- Strengthen **session security**
+
+---
+
+## 04: Conclusion
+
+The **Bundesliga Predictor** delivers valuable football insights through match results, predictions, and team analytics. There is **room for improvement** in accessibility, data presentation, and real-time updates.
+
+The app provides a solid foundation for football statistics and prediction but can **further improve** through better real-time insights, enhanced UI, and additional predictive features.
