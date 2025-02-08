@@ -5,7 +5,7 @@ nav_order: 2
 ---
 
 {: .label }
-**Author:** 
+[Linus Piorkowsky & Henry Lückewille]
 
 {: .no_toc }
 # Data Model
