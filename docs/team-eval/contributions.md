@@ -21,6 +21,10 @@ nav_order: 4
 
 ## Henry Lükewille's Contributions
 
+### 2024-11-07
+- **Drop table added to delete table if needed**  
+  Pushed 2 commits to `main`: 2d00bd4...f12fc7c
+
 ### 2024-11-09
 - **Added logout logic**  
   Pushed 5 commits to `main`: f590081...4a9f159
@@ -28,10 +32,6 @@ nav_order: 4
 ### 2024-11-09
 - **Added macOS folder changes to git ignore**  
   Pushed 4 commits to `main`: 95fa5cb...f590081
-
-### 2024-11-07
-- **Drop table added to delete table if needed**  
-  Pushed 2 commits to `main`: 2d00bd4...f12fc7c
 
 - **Routes for Login, Register, and Welcome Page**  
   Pushed 5 commits to `main`: f12fc7c...9573e7b
